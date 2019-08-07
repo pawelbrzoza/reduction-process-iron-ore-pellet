@@ -11,7 +11,7 @@ namespace grain_growth.Helpers
 
         public static Grain[] AllGrainsTypes;
 
-        public static Range InitCellularAutomata(MainProperties properties)
+        public static Range InitCellularAutomata(Models.Properties properties, Color grainColor)
         {
             AllGrainsTypes = new Grain[properties.AmountOfGrains];
 
@@ -33,34 +33,14 @@ namespace grain_growth.Helpers
             // init grains array by white color (empty grains)
             UpdateInsideCircle(tempRange, new Point(150, 150));
 
-            // set random starting coordinates [x,y] and color for grains on circle boundary (equal sections*)
-            Point coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
-            for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
-            {
-
-                double angle = grainNumber * (360 / properties.AmountOfGrains);
-                coordinates.X = (int)(150 + 148 * Math.Cos(angle));
-                coordinates.Y = (int)(150 + 148 * Math.Sin(angle));
-
-                AllGrainsTypes[grainNumber - 1] = new Grain()
-                {
-                    Color = Color.FromArgb(Random.Next(10, 240), Random.Next(10, 240), Random.Next(2, 240)),
-                    Id = grainNumber,
-                };
-
-                tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
-                tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
-            }
-
-            //// set random starting coordinates [x,y] and color for grains on circle boundary in random way
-            //Point coordinates;
+            //// set random starting coordinates [x,y] and color for grains on circle boundary (equal sections*)
+            //Point coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
             //for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
             //{
-            //    do
-            //    {
-            //        coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
-            //    }
-            //    while (tempRange.GrainsArray[coordinates.X, coordinates.Y].Id != -1);
+
+            //    double angle = grainNumber * (360 / properties.AmountOfGrains);
+            //    coordinates.X = (int)(150 + 148 * Math.Cos(angle));
+            //    coordinates.Y = (int)(150 + 148 * Math.Sin(angle));
 
             //    AllGrainsTypes[grainNumber - 1] = new Grain()
             //    {
@@ -71,6 +51,26 @@ namespace grain_growth.Helpers
             //    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
             //    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
             //}
+
+            // set random starting coordinates [x,y] and color for grains on circle boundary in random way
+            Point coordinates;
+            for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
+            {
+                do
+                {
+                    coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
+                }
+                while (tempRange.GrainsArray[coordinates.X, coordinates.Y].Id != -1);
+
+                AllGrainsTypes[grainNumber - 1] = new Grain()
+                {
+                    Color = grainColor,
+                    Id = grainNumber,
+                };
+
+                tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
+                tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
+            }
 
             //// set random starting coordinates [x,y] and color for grains inside circle
             //Point coordinates;
@@ -104,8 +104,7 @@ namespace grain_growth.Helpers
                 tempRange.GrainsArray[x, y] = new Grain()
                 {
                     Id = (int)SpecialId.Id.Border,
-                    Color = Color.Black,
-                    Energy_H = 0
+                    Color = Color.Black
                 };
             }
         }
@@ -188,14 +187,12 @@ namespace grain_growth.Helpers
                 tempRange.GrainsArray[0, i] = new Grain()
                 {
                     Id = (int)SpecialId.Id.Border,
-                    Color = Color.Black,
-                    Energy_H = 0
+                    Color = Color.Black
                 };
                 tempRange.GrainsArray[tempRange.Width - 1, i] = new Grain()
                 {
                     Id = (int)SpecialId.Id.Border,
-                    Color = Color.Black,
-                    Energy_H = 0
+                    Color = Color.Black
                 };
             }
 
@@ -204,53 +201,14 @@ namespace grain_growth.Helpers
                 tempRange.GrainsArray[i, 0] = new Grain()
                 {
                     Id = (int)SpecialId.Id.Border,
-                    Color = Color.Black,
-                    Energy_H = 0
+                    Color = Color.Black
                 };
                 tempRange.GrainsArray[i, tempRange.Height - 1] = new Grain()
                 {
                     Id = (int)SpecialId.Id.Border,
-                    Color = Color.Black,
-                    Energy_H = 0
+                    Color = Color.Black
                 };
             }
-        }
-
-        public static Range InitMonteCarlo(MainProperties properties)
-        {
-            AllGrainsTypes = new Grain[properties.AmountOfGrains];
-            Range tempRange = new Range(properties.RangeWidth, properties.RangeHeight);
-
-            // border
-            AddBlackBorder(tempRange);
-
-            // set random starting coordinates [x,y] and color for grains 
-            for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
-            {
-                AllGrainsTypes[grainNumber - 1] = new Grain()
-                {
-                    Color = Color.FromArgb(Random.Next(10, 240), Random.Next(10, 240), Random.Next(2, 240)),
-                    Id = grainNumber,
-                };
-            }
-
-            for (int i = 1; i < tempRange.Width - 1; i++)
-            {
-                for (int j = 1; j < tempRange.Height - 1; j++)
-                {
-                    int r = Random.Next(AllGrainsTypes.Length);
-                    tempRange.GrainsArray[i, j] = new Grain()
-                    {
-                        Id = AllGrainsTypes[r].Id,
-                        Color = AllGrainsTypes[r].Color,
-                    };
-
-                }
-            }
-
-            tempRange.StructureBitmap = new Bitmap(properties.RangeWidth, properties.RangeHeight);
-            tempRange.IsFull = false;
-            return tempRange;
         }
     }
 }

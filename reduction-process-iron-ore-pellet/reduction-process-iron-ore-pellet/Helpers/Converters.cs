@@ -23,9 +23,9 @@ namespace grain_growth.Helpers
             }
         }
 
-        public static int StringToInt(string intString)
+        public static System.Drawing.Color WindowsToDrawingColor(System.Windows.Media.Color mediacolor)
         {
-            return (int.TryParse(intString, out int i) ? i : 0);
+            return System.Drawing.Color.FromArgb(mediacolor.A, mediacolor.R, mediacolor.G, mediacolor.B);
         }
     }
 }

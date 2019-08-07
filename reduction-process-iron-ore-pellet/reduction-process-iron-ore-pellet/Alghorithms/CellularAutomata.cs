@@ -6,13 +6,13 @@ using grain_growth.Helpers;
 using grain_growth.Models;
 using FastBitmapLib;
 
-namespace grain_growth.MainMethods
+namespace grain_growth.Alghorithms
 {
     public class CellularAutomata
     {
         private Random Random = new Random();
         
-        public Range Grow(Range prevRange, MainProperties properties)
+        public Range Grow(Range prevRange, Models.Properties properties)
         {
             var currRange = new Range(prevRange.Width, prevRange.Height, true);
 
@@ -47,7 +47,7 @@ namespace grain_growth.MainMethods
                                     break;
                             }
 
-                            var most = neighbourhood.Where(g => (!SpecialId.IsIdSpecial(g.Id)))
+                            var most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
                                                     .GroupBy(g => g.Id);
 
                             if (most.Any())
@@ -75,7 +75,7 @@ namespace grain_growth.MainMethods
                             // rule 1 - ordinary moore
                             neighbourhood = TakeMooreNeighbourhood(i, j, prevRange.GrainsArray);
 
-                            var most = neighbourhood.Where(g => (!SpecialId.IsIdSpecial(g.Id)))
+                            var most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
                                                     .GroupBy(g => g.Id);
 
                             if (most.Any())
@@ -92,7 +92,7 @@ namespace grain_growth.MainMethods
                                     // rule 2 - nearest moore
                                     neighbourhood = TakeNearestMooreNeighbourhood(i, j, prevRange.GrainsArray);
 
-                                    most = neighbourhood.Where(g => (!SpecialId.IsIdSpecial(g.Id)))
+                                    most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
                                                         .GroupBy(g => g.Id);
 
                                     if (most.Any())
@@ -109,7 +109,7 @@ namespace grain_growth.MainMethods
                                         // rule 3 - further moore
                                         neighbourhood = TakeFurtherMooreNeighbourhood(i, j, prevRange.GrainsArray);
 
-                                        most = neighbourhood.Where(g => (!SpecialId.IsIdSpecial(g.Id)))
+                                        most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
                                                             .GroupBy(g => g.Id);
 
                                         if (most.Any())
@@ -127,11 +127,12 @@ namespace grain_growth.MainMethods
                                         // rule 4 - ordinary moore with probability
                                         neighbourhood = TakeMooreNeighbourhood(i, j, prevRange.GrainsArray);
 
-                                        most = neighbourhood.Where(g => (!SpecialId.IsIdSpecial(g.Id)))
+                                        most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
                                                             .GroupBy(g => g.Id);
 
                                         var randomProbability = Random.Next(0, 100);
-                                        if (most.Any() && (randomProbability <= properties.GrowthProbability))
+
+                                        if (most.Any() && (randomProbability <= properties.CurrGrowthProbability))
                                         {
                                             currRange.GrainsArray[i, j] = most.OrderByDescending(g => g.Count())
                                                                                 .Select(g => g.First()).First();
@@ -227,52 +228,6 @@ namespace grain_growth.MainMethods
                         fastBitmap.SetPixel(i, j, range.GrainsArray[i, j].Color);
             }
             //Console.WriteLine("Serial: {0:f2} s", sw.Elapsed.TotalSeconds);
-        }
-
-        public static void UpdateGrainsArray(Range range)
-        {
-            range.GrainsArray = new Grain[range.Width, range.Height];
-
-            Dictionary<Color, int> grainIds = new Dictionary<Color, int>
-            {
-                { Color.FromArgb(0, 0, 0), 0 },
-            };
-
-            if (range.StructureBitmap != null)
-            {
-                for (int i = 0; i < range.Width; i++)
-                {
-                    for (int j = 0; j < range.Height; j++)
-                    {
-                        var color = range.StructureBitmap.GetPixel(i, j);
-                        range.GrainsArray[i, j] = new Grain()
-                        {
-                            Color = color,
-                            Id = ChooseGrainId(grainIds, color),
-                        };
-                    }
-                }
-            }
-        }
-
-        public static int ChooseGrainId(Dictionary<Color, int> grainIds, Color color)
-        {
-            int nextId = grainIds.Values.Max()+1;
-
-            if (grainIds.ContainsKey(color))
-            {
-                if (!grainIds.TryGetValue(color, out int id))
-                {
-                    grainIds[color] = nextId;
-                    return nextId;
-                }
-                return id;
-            }
-            else
-            {
-                grainIds.Add(color, nextId);
-                return nextId;
-            }
         }
     }
 }

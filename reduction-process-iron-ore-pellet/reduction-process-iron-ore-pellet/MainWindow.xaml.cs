@@ -1,4 +1,4 @@
-﻿using grain_growth.MainMethods;
+﻿using grain_growth.Alghorithms;
 using grain_growth.Models;
 using grain_growth.Helpers;
 
@@ -10,137 +10,275 @@ using Microsoft.Win32;
 using System.Drawing;
 using System.IO;
 using System.Windows.Input;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Threading;
 using FastBitmapLib;
+using System.Diagnostics;
 
 namespace grain_growth
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    /// 
     public partial class MainWindow : Window
     {
-        private MainProperties properties;
-        private DispatcherTimer dispatcher;
-        private Range prevRange, currRange;
-        private CellularAutomata ca;
-        private MonteCarlo mc;
-        private InitInclusions inclusions;
-        private InitSubstructures substructures;
-        private InitBoundaries boundaries;
-        private InitNucleons nucleons;
-        private int tempIteration;
+        private Stopwatch stopWatch;
+        private static System.Timers.Timer aTimer;
+        private SynchronizationContext mainThread = SynchronizationContext.Current;
+        private Models.Properties properties;
+        private DispatcherTimer mainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 1) };
+        private DispatcherTimer tempteratureDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 1) };
+        private Bitmap mainBitmap;
+        private FastBitmap fastBitmap;
+        private Range range, range2, range3, range4;
+        private bool phaseFe2O3Started, phaseFe3O4Started, phaseFeOStarted, phaseFeStarted;
 
         public MainWindow()
         {
             InitializeComponent();
-
-            // initialize structure updates
-            dispatcher = new DispatcherTimer
-            {
-                Interval = new TimeSpan(0, 0, 0, 0, 1)
-            };
-            dispatcher.Tick += Dispatcher_Tick;
-
-            substructures = new InitSubstructures();
-            ca = new CellularAutomata();
-            mc = new MonteCarlo();
-            currRange = new Range();
-            prevRange = new Range();
-
-            Substructures.SubStrucrtuePointsList = new List<System.Drawing.Point>();
             SetProperties();
+            mainDispatcher.Tick += DispatcherTick;
+            tempteratureDispatcher.Tick += TemperaturDispatcherTick;
+            if (mainThread == null) mainThread = new SynchronizationContext();
+            ConstantGrowthRadioButton.IsChecked = true;
         }
-    
+
+        private static void SetTimer()
+        {
+            // Create a timer with a two second interval.
+            aTimer = new System.Timers.Timer(1000);
+            // Hook up the Elapsed event for the timer. 
+            aTimer.Elapsed += OnTimedEvent;
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+        }
+
+        private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            Console.WriteLine("The Elapsed event was raised at {0:HH:mm:ss.fff}",
+                              e.SignalTime);
+        }
+
         private void SetProperties()
         {
-            properties = new MainProperties()
+            phaseFe2O3Started = phaseFe3O4Started = phaseFeOStarted = phaseFeStarted = false;
+
+            properties = new Models.Properties()
             {
-                RangeWidth = (int)PelletImage.Width,
-                RangeHeight = (int)PelletImage.Height,
-                AmountOfGrains = Converters.StringToInt(NumOfGrainsTextBox.Text),
+                RangeWidth =            (int)PelletImage.Width,
+                RangeHeight =           (int)PelletImage.Height,
+                AmountOfGrains = int.Parse(NumOfGrainsTextBox.Text),
                 NeighbourhoodType = ChooseNeighbourhoodType(),
-                GrowthProbability = Converters.StringToInt(GrowthProbabilityTextBox.Text),
-                MCS = Converters.StringToInt(MCSTextBox.Text),
-                SubstructuresType = ChooseSubstructuresType(),
-                MethodType = ChooseMethodType()
+                CurrGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
+                GrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
+                CurrTemperature =       0,
+                RiseOfTemperature = int.Parse(RiseOfTemperatureTextBox.Text),
+                MaxTemperature = int.Parse(MaxTemperatureTextBox.Text),
+                Fe2O3Temperature = int.Parse(Fe2O3TextBox.Text),
+                Fe3O4Temperature = int.Parse(Fe3O4TextBox.Text),
+                FeOTemperature = int.Parse(FeOTextBox.Text),
+                FeTemperature = int.Parse(FeTextBox.Text)
             };
-            inclusions = new InitInclusions()
-            {
-                CreationTime = ChooseInlcusionCreationTime(),
-                InclusionsType = ChooseInclusionsType(),
-                IsEnable = (bool)InclusionsCheckBox.IsChecked,
-                AmountOfInclusions = Converters.StringToInt(NumOfInclusionsTextBox.Text),
-                Size = Converters.StringToInt(SizeOfInclusionsTextBox.Text)
-            };
-            boundaries = new InitBoundaries(properties);
-            nucleons = new InitNucleons()
-            {
-                IsEnable = (bool)SRXCheckBox.IsChecked,
-                AmountOfNucleons = Converters.StringToInt(NumOfNucleonsTextBox.Text),
-                NucleonsStates = new Color[Converters.StringToInt(NumOfStatesTextBox_SRX.Text)],
-                TypeOfcreation = ChooseTypeOfNucleonsCreation(),
-                EnergyDistribution = ChooseEnegryDistribution(),
-                EnergyInside = Converters.StringToInt(EnergyInsideTextBox.Text),
-                EnergyOnEdges = Converters.StringToInt(EnergyOnEdgesTextBox.Text),
-                PositionDistribiution = ChoosePositionDistribution(),
-                EnergyRange = new Range()
-                
-            };
-            tempIteration = Converters.StringToInt(MCSTextBox.Text);
-            
+
+            range =  InitStructures.InitCellularAutomata(properties, Color.Black);
+            range2 = InitStructures.InitCellularAutomata(properties, Color.Black);
+            range3 = InitStructures.InitCellularAutomata(properties, Color.Black);
+            range4 = InitStructures.InitCellularAutomata(properties, Color.Black);
+
+            mainBitmap = new Bitmap((int)PelletImage.Width, (int)PelletImage.Height);
         }
 
-        private void Dispatcher_Tick(object sender, EventArgs e)
+        private void TemperaturDispatcherTick(object sender, EventArgs e)
         {
-            if (MonteCarloRadioButton.IsChecked == true)
+            if (properties.CurrTemperature < properties.MaxTemperature)
             {
-                currRange = mc.Grow(prevRange, nucleons);
-                properties.MCS--;
-                if (properties.MCS <= 0)
+                properties.CurrTemperature = (int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature;
+                temperatureLabel.Content = Convert.ToString((int)properties.CurrTemperature);
+            }
+            else if (properties.CurrTemperature >= properties.MaxTemperature && mainDispatcher.IsEnabled)
+            {
+                Console.WriteLine("Serial: {0:f2} s", stopWatch.Elapsed.TotalSeconds);
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (AfterInclusionRadioButton.IsChecked == true && InclusionsCheckBox.IsChecked == true)
-                        AddInclusionsButton_Click(new object(), new RoutedEventArgs());
+                    Mouse.OverrideCursor = null;
+                });
+                aTimer.Stop();
+                aTimer.Dispose();
+                mainDispatcher.Stop();
+                tempteratureDispatcher.Stop();
+            }
+        }
 
-                    SetEnableSubStrAndBoundCheckBoxs();
-                    Application.Current.Dispatcher.Invoke(() =>
+        private void DispatcherTick(object sender, EventArgs e)
+        {
+            if (properties.CurrTemperature >= properties.Fe2O3Temperature)
+            {
+                if (!phaseFe2O3Started)
+                {
+                    PhaseFe2O3(ObjectCopier.Clone(properties));
+                    Console.WriteLine("Start Fe2O3 phase");
+                }
+            }
+            using (fastBitmap = mainBitmap.FastLock())
+            {
+                for (int i = 1; i < mainBitmap.Width - 1; ++i)
+                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                        if (!SpecialId.IsSpecialId(range.GrainsArray[i, j].Id))
+                            fastBitmap.SetPixel(i, j, range.GrainsArray[i, j].Color);
+            }
+
+            if (properties.CurrTemperature >= properties.Fe3O4Temperature)
+            {
+                if (!phaseFe3O4Started)
+                {
+                    PhaseFe3O4(ObjectCopier.Clone(properties));
+                    Console.WriteLine("Start Fe3O4 phase");
+                }
+            }
+            using (fastBitmap = mainBitmap.FastLock())
+            {
+                for (int i = 1; i < mainBitmap.Width - 1; ++i)
+                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                        if (!SpecialId.IsSpecialId(range2.GrainsArray[i, j].Id))
+                            fastBitmap.SetPixel(i, j, range2.GrainsArray[i, j].Color);
+            }
+
+            if (properties.CurrTemperature >= properties.FeOTemperature)
+            {
+                if (!phaseFeOStarted)
+                {
+                    PhaseFeO(ObjectCopier.Clone(properties));
+                    Console.WriteLine("Start FeO phase");
+                }
+            }
+            using (fastBitmap = mainBitmap.FastLock())
+            {
+                for (int i = 1; i < mainBitmap.Width - 1; ++i)
+                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                        if (!SpecialId.IsSpecialId(range3.GrainsArray[i, j].Id))
+                            fastBitmap.SetPixel(i, j, range3.GrainsArray[i, j].Color);
+            }
+
+            if (properties.CurrTemperature >= properties.FeTemperature)
+            {
+                if (!phaseFeStarted)
+                {
+                    PhaseFe(ObjectCopier.Clone(properties));
+                    Console.WriteLine("Start Fe phase");
+                }
+            }
+            using (fastBitmap = mainBitmap.FastLock())
+            {
+                for (int i = 1; i < mainBitmap.Width - 1; ++i)
+                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                        if (!SpecialId.IsSpecialId(range4.GrainsArray[i, j].Id))
+                            fastBitmap.SetPixel(i, j, range4.GrainsArray[i, j].Color);
+            }
+            PelletImage.Source = Converters.BitmapToImageSource(mainBitmap);
+        }
+
+        private async void PhaseFe2O3(Models.Properties proper)
+        {
+            phaseFe2O3Started = true;
+            CellularAutomata ca = new CellularAutomata();
+            Range currRange = new Range();
+            Range prevRange = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(Fe2O3ColorPicker.SelectedColor.Value));
+
+            if (PhasesGrowthRadioButton.IsChecked == true)
+                proper.CurrGrowthProbability = Int32.Parse(Fe2O3PropabilityTextBox.Text);
+
+            await Task.Factory.StartNew(() =>
+            {
+                while (properties.CurrTemperature < properties.MaxTemperature)
+                {
+                    currRange = ca.Grow(prevRange, proper);
+                    prevRange = currRange;
+
+                    mainThread.Send((object state) => {
+                        range = currRange;
+                    }, null);
+                }
+            });
+            Console.WriteLine("Stop Fe2O3 phase");
+        }
+
+        private async void PhaseFe3O4(Models.Properties proper2)
+        {
+            phaseFe3O4Started = true;
+            CellularAutomata ca2 = new CellularAutomata();
+            Range currRange2 = new Range();
+            Range prevTange2 = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(Fe3O4ColorPicker.SelectedColor.Value));
+
+            if (PhasesGrowthRadioButton.IsChecked == true)
+                proper2.CurrGrowthProbability = Int32.Parse(Fe3O4PropabilityTextBox.Text);
+
+            await Task.Factory.StartNew(() =>
+            {
+                while (properties.CurrTemperature < properties.MaxTemperature)
+                {
+                    currRange2 = ca2.Grow(prevTange2, proper2);
+                    prevTange2 = currRange2;
+
+                    mainThread.Send((object state) =>
                     {
-                        Mouse.OverrideCursor = null;
-                    });
-                    currRange.IsFull = true;
-                    dispatcher.Stop();
+                        range2 = currRange2;
+                    }, null);
                 }
-                if (nucleons.TypeOfcreation == TypeOfNucleonsCreation.Constant)
-                {
-                    prevRange = nucleons.InitializeNucleons(currRange, nucleons);
-                }
-                else if (nucleons.TypeOfcreation == TypeOfNucleonsCreation.Increasing)
-                {
-                    nucleons.AmountOfNucleons += tempIteration;
-                    prevRange = nucleons.InitializeNucleons(currRange, nucleons);
-                }
-            }
-            else
+            });
+            Console.WriteLine("Stop Fe3O4 phase");
+        }
+
+        private async void PhaseFeO(Models.Properties proper3)
+        {
+            phaseFeOStarted = true;
+            CellularAutomata ca3 = new CellularAutomata();
+            Range currRange3 = new Range();
+            Range prevTange3 = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(FeOColorPicker.SelectedColor.Value));
+
+            if (PhasesGrowthRadioButton.IsChecked == true)
+                proper3.CurrGrowthProbability = Int32.Parse(FeOPropabilityTextBox.Text);
+
+            await Task.Factory.StartNew(() =>
             {
-                currRange = ca.Grow(prevRange, properties);
-
-                if (currRange.IsFull)
+                while (properties.CurrTemperature < properties.MaxTemperature)
                 {
-                    if (AfterInclusionRadioButton.IsChecked == true && InclusionsCheckBox.IsChecked == true)
-                        AddInclusionsButton_Click(new object(), new RoutedEventArgs());
+                    currRange3 = ca3.Grow(prevTange3, proper3);
+                    prevTange3 = currRange3;
 
-                    SetEnableSubStrAndBoundCheckBoxs();
-
-                    Application.Current.Dispatcher.Invoke(() => {
-                        Mouse.OverrideCursor = null;
-                    });
-
-                    dispatcher.Stop();
+                    mainThread.Send((object state) =>
+                    {
+                        range3 = currRange3;
+                    }, null);
                 }
-            }
+            });
+            Console.WriteLine("Stop FeO phase");
+        }
 
-            prevRange = currRange;
-            PelletImage.Source = Converters.BitmapToImageSource(currRange.StructureBitmap);
+        private async void PhaseFe(Models.Properties proper4)
+        {
+            phaseFeStarted = true;
+            CellularAutomata ca4 = new CellularAutomata();
+            Range currRange4 = new Range();
+            Range prevTange4 = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(FeColorPicker.SelectedColor.Value));
+
+            if (PhasesGrowthRadioButton.IsChecked == true)
+                proper4.CurrGrowthProbability = Int32.Parse(FePropabilityTextBox.Text);
+
+            await Task.Factory.StartNew(() =>
+            {
+                while (properties.CurrTemperature < properties.MaxTemperature)
+                {
+                    currRange4 = ca4.Grow(prevTange4, proper4);
+                    prevTange4 = currRange4;
+
+                    mainThread.Send((object state) =>
+                    {
+                        range4 = currRange4;
+                    }, null);
+                }
+            });
+            Console.WriteLine("Stop Fe phase");
         }
 
         private void Play_Button_Click(object sender, RoutedEventArgs e)
@@ -148,217 +286,125 @@ namespace grain_growth
             Application.Current.Dispatcher.Invoke(() => {
                 Mouse.OverrideCursor = Cursors.Wait;
             });
-            
+
             SetProperties();
-
-            if (Substructures.SubStrucrtuePointsList.Count > 0)
-            {
-                if(MonteCarloRadioButton.IsChecked == true)
-                    prevRange = substructures.UpdateSubstructuresMC(currRange, properties);
-                else
-                    prevRange = substructures.UpdateSubstructuresCA(currRange, properties);
-            }
-            else
-            {
-                if (MonteCarloRadioButton.IsChecked == true)
-                {
-                    prevRange = InitStructures.InitMonteCarlo(properties);
-                    SRXCheckBox.IsChecked = false;
-                    nucleons.IsEnable = false;
-                }
-                else
-                {
-                    prevRange = InitStructures.InitCellularAutomata(properties);
-
-                    if (inclusions.CreationTime == InclusionsCreationTime.Begin && InclusionsCheckBox.IsChecked == true)
-                        prevRange = inclusions.AddInclusionsAtTheBegining(prevRange);
-                }
-            }
-            dispatcher.Start();
+            SetTimer();
+            stopWatch = Stopwatch.StartNew();
+            mainDispatcher.Start();
+            tempteratureDispatcher.Start();
         }
 
-        private void SRX_Add_Button_Click(object sender, RoutedEventArgs e)
+        private void Stop_Button_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Mouse.OverrideCursor = Cursors.Wait;
-                });
+            StopButton.Visibility = Visibility.Hidden;
+            ResumeButton.Visibility = Visibility.Visible;
+            Application.Current.Dispatcher.Invoke(() => {
+                Mouse.OverrideCursor = null;
+            });
 
-                SetProperties();
-                CellularAutomata.UpdateGrainsArray(currRange);
-                prevRange = nucleons.InitializeNucleons(currRange, nucleons);
-                prevRange = nucleons.EnergyDistributor(currRange, nucleons);
-                PelletImage.Source = Converters.BitmapToImageSource(prevRange.StructureBitmap);
-                dispatcher.Start();
-            }
-            catch (Exception)
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Mouse.OverrideCursor = null;
-                });
-            }
+            mainDispatcher.Stop();
+            tempteratureDispatcher.Stop();
         }
 
-        private void SRX_New_Button_Click(object sender, RoutedEventArgs e)
+        private void Resume_Button_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Mouse.OverrideCursor = Cursors.Wait;
-                });
+            ResumeButton.Visibility = Visibility.Hidden;
+            StopButton.Visibility = Visibility.Visible;
+            Application.Current.Dispatcher.Invoke(() => {
+                Mouse.OverrideCursor = Cursors.Wait;
+            });
 
-                SetProperties();
-                SRXCheckBox.IsChecked = false;
-                prevRange = substructures.UpdateSubstructuresSRX(currRange, properties);
-                dispatcher.Start();
-            }
-            catch (Exception)
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Mouse.OverrideCursor = null;
-                });
-            }
+            mainDispatcher.Start();
+            tempteratureDispatcher.Start();
         }
 
-        private void Energy_Vizualization_Button_Click(object sender, RoutedEventArgs e)
+        private void Start_Temp_Button_Click(object sender, RoutedEventArgs e)
         {
-            currRange = new Range();
-            currRange = InitStructures.InitCellularAutomata(properties);
-
-            CellularAutomata.UpdateBitmap(prevRange);
-
-            currRange.StructureBitmap = prevRange.StructureBitmap;
-            CellularAutomata.UpdateGrainsArray(currRange);
-            CellularAutomata.UpdateBitmap(currRange);
-            nucleons.EnergyDistributor(prevRange, nucleons);
-            nucleons.EnergyVisualization(ref prevRange, nucleons);
-            CellularAutomata.UpdateBitmap(prevRange);
-            PelletImage.Source = Converters.BitmapToImageSource(prevRange.StructureBitmap);
+            StartTemperatureButton.Visibility = Visibility.Hidden;
+            StopTemperatureButton.Visibility = Visibility.Visible;
+            tempteratureDispatcher.Start();
         }
 
-        private void Previous_Structure_Button_Click(object sender, RoutedEventArgs e)
+        private void Stop_Temp_Button_Click(object sender, RoutedEventArgs e)
         {
-            prevRange = new Range();
-            prevRange = InitStructures.InitCellularAutomata(properties);
-
-            CellularAutomata.UpdateBitmap(currRange);
-
-            prevRange.StructureBitmap = currRange.StructureBitmap;
-            CellularAutomata.UpdateGrainsArray(prevRange);
-            CellularAutomata.UpdateBitmap(prevRange);
-            prevRange = nucleons.EnergyDistributor(currRange, nucleons);
-
-            CellularAutomata.UpdateBitmap(currRange);
-            PelletImage.Source = Converters.BitmapToImageSource(currRange.StructureBitmap);
+            StartTemperatureButton.Visibility = Visibility.Visible;
+            StopTemperatureButton.Visibility = Visibility.Hidden;
+            tempteratureDispatcher.Stop();
         }
 
-        private void MCS_Growth_Button_Click(object sender, RoutedEventArgs e)
+        private void ConstantGrowthRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            if(prevRange != null)
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Mouse.OverrideCursor = Cursors.Wait;
-                });
-
-                SetProperties();
-                dispatcher.Start();
-            }
+            GrowthProbabilityTextBox.IsEnabled = true;
+            Fe2O3PropabilityTextBox.IsEnabled = false;
+            Fe3O4PropabilityTextBox.IsEnabled = false;
+            FeOPropabilityTextBox.IsEnabled = false;
+            FePropabilityTextBox.IsEnabled = false;
         }
 
-        private void Generate_Boundaries_Click(object sender, RoutedEventArgs e)
+        private void PhasesGrowthRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            if(BoundariesRadioButtonAll.IsChecked == true)
-            {
-                boundaries.GenerateBoundariesAll(currRange);
-                currRange = boundaries.BoundariesAll;
-                PelletImage.Source = Converters.BitmapToImageSource(currRange.StructureBitmap);
-                Clear_Selected_Grains_Click(sender, e);
-            }
-            else
-            {
-                boundaries.GenerateBoundariesSelected(currRange);
-                currRange = boundaries.BoundariesSelected;
-                PelletImage.Source = Converters.BitmapToImageSource(currRange.StructureBitmap);
-            }
+            GrowthProbabilityTextBox.IsEnabled = false;
+            Fe2O3PropabilityTextBox.IsEnabled = true;
+            Fe3O4PropabilityTextBox.IsEnabled = true;
+            FeOPropabilityTextBox.IsEnabled = true;
+            FePropabilityTextBox.IsEnabled = true;
         }
 
-        private void Clear_Content_Click(object sender, RoutedEventArgs e)
+        private void ProgresiveGrowthRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            CellularAutomata.UpdateBitmap(boundaries.ClearBoundaries);
-            currRange = boundaries.ClearBoundaries;
-            PelletImage.Source = Converters.BitmapToImageSource(currRange.StructureBitmap);
-            Clear_Selected_Grains_Click(sender, e);
-        }
-
-        private void Image_Click(object sender, MouseButtonEventArgs e)
-        {
-            System.Windows.Point point = e.GetPosition(PelletImage);
-            Substructures.SubStrucrtuePointsList.Add(new System.Drawing.Point { X = (int)point.X, Y = (int)point.Y });
-
-            var color = currRange.StructureBitmap.GetPixel((int)point.X, (int)point.Y);
-
-            boundaries.DrawSingleSelect(currRange, color);
-            PelletImage.Source = Converters.BitmapToImageSource(boundaries.BoundariesSingleSelect.StructureBitmap);
-
-            numberOfSelectingGrains.Content = Substructures.SubStrucrtuePointsList.Count;
+            GrowthProbabilityTextBox.IsEnabled = false;
+            Fe2O3PropabilityTextBox.IsEnabled = false;
+            Fe3O4PropabilityTextBox.IsEnabled = false;
+            FeOPropabilityTextBox.IsEnabled = false;
+            FePropabilityTextBox.IsEnabled = false;
         }
 
         private void ImportBitmap_Click(object sender, RoutedEventArgs e)
         {
-            //RectangleCanvas.Visibility = Visibility.Hidden;
-            currRange = new Range();
-            currRange = InitStructures.InitCellularAutomata(properties);
-            SetProperties();
-            OpenFileDialog openfiledialog = new OpenFileDialog();
+            ////RectangleCanvas.Visibility = Visibility.Hidden;
+            //currRange = new Range();
+            ////currRange = InitStructures.InitCellularAutomata(properties);
+            //SetProperties();
+            //OpenFileDialog openfiledialog = new OpenFileDialog();
 
-            openfiledialog.Title = "Open Image";
-            openfiledialog.Filter = "Image File|*.bmp; *.gif; *.jpg; *.jpeg; *.png;";
+            //openfiledialog.Title = "Open Image";
+            //openfiledialog.Filter = "Image File|*.bmp; *.gif; *.jpg; *.jpeg; *.png;";
 
-            if (openfiledialog.ShowDialog() == true)
-            {
-                PelletImage.Source = Converters.BitmapToImageSource(new Bitmap(openfiledialog.FileName));
-                currRange.StructureBitmap = new Bitmap(openfiledialog.FileName);
+            //if (openfiledialog.ShowDialog() == true)
+            //{
+            //    PelletImage.Source = Converters.BitmapToImageSource(new Bitmap(openfiledialog.FileName));
+            //    currRange.StructureBitmap = new Bitmap(openfiledialog.FileName);
                 
-                CellularAutomata.UpdateGrainsArray(currRange);
-                for (int i = 0; i < currRange.Width; i++)
-                    for (int j = 0; j < currRange.Height; j++)
-                        currRange.StructureBitmap.SetPixel(i, j, currRange.GrainsArray[i, j].Color);
-            }
+            //    CellularAutomata.UpdateGrainsArray(currRange);
+            //    for (int i = 0; i < currRange.Width; i++)
+            //        for (int j = 0; j < currRange.Height; j++)
+            //            currRange.StructureBitmap.SetPixel(i, j, currRange.GrainsArray[i, j].Color);
+            //}
 
-            dispatcher.Stop();
-            Clear_Selected_Grains_Click(sender, e);
-            SetEnableSubStrAndBoundCheckBoxs();
+            ////dispatcher.Stop();
         }
 
         private void ImportTXT_Click(object sender, RoutedEventArgs e)
         {
-            //RectangleCanvas.Visibility = Visibility.Hidden;
-            currRange = new Range();
-            currRange = InitStructures.InitCellularAutomata(properties);
-            SetProperties();
-            OpenFileDialog openfiledialog = new OpenFileDialog();
+            ////RectangleCanvas.Visibility = Visibility.Hidden;
+            //currRange = new Range();
+            ////currRange = InitStructures.InitCellularAutomata(properties);
+            //SetProperties();
+            //OpenFileDialog openfiledialog = new OpenFileDialog();
 
-            openfiledialog.Title = "Open Image";
-            openfiledialog.Filter = "Image File|*.txt";
+            //openfiledialog.Title = "Open Image";
+            //openfiledialog.Filter = "Image File|*.txt";
 
-            if (openfiledialog.ShowDialog() == true)
-            {
-                PelletImage.Source = Converters.BitmapToImageSource(new Bitmap(openfiledialog.FileName));
-                currRange.StructureBitmap = new Bitmap(openfiledialog.FileName);
+            //if (openfiledialog.ShowDialog() == true)
+            //{
+            //    PelletImage.Source = Converters.BitmapToImageSource(new Bitmap(openfiledialog.FileName));
+            //    currRange.StructureBitmap = new Bitmap(openfiledialog.FileName);
 
-                CellularAutomata.UpdateGrainsArray(currRange);
-                CellularAutomata.UpdateBitmap(currRange);
-            }
+            //    CellularAutomata.UpdateGrainsArray(currRange);
+            //    CellularAutomata.UpdateBitmap(currRange);
+            //}
 
-            dispatcher.Stop();
-            Clear_Selected_Grains_Click(sender, e);
-            SetEnableSubStrAndBoundCheckBoxs();
+            ////dispatcher.Stop();
         }
 
         private void ExportBitmap_Click(object sender, RoutedEventArgs e)
@@ -400,39 +446,6 @@ namespace grain_growth
             Application.Current.Shutdown();
         }
 
-        private void AddInclusionsButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                SetProperties();
-                currRange.IsFull = true;
-                if (inclusions.IsEnable && (inclusions.CreationTime == InclusionsCreationTime.After))
-                {
-                    CellularAutomata.UpdateGrainsArray(currRange);
-                    currRange =  inclusions.AddInclusionsAfter(currRange);
-                    CellularAutomata.UpdateBitmap(currRange);
-                    prevRange = currRange;
-                    PelletImage.Source = Converters.BitmapToImageSource(currRange.StructureBitmap);
-                }
-            }
-            catch (Exception) { }
-        }
-
-        private void Clear_Selected_Grains_Click(object sender, RoutedEventArgs e)
-        {
-            Substructures.SubStrucrtuePointsList.Clear();
-            numberOfSelectingGrains.Content = Substructures.SubStrucrtuePointsList.Count;
-        }
-
-        private void SetEnableSubStrAndBoundCheckBoxs()
-        {
-            if (currRange != null)
-            {
-                BoundariesCheckBox.IsEnabled = true;
-                SubstructuresCheckBox.IsEnabled = true;
-            }
-        }
-
         private NeighbourhoodType ChooseNeighbourhoodType()
         {
             if (MooreRadioButton.IsChecked == true)
@@ -446,94 +459,6 @@ namespace grain_growth
             else
             {
                 return NeighbourhoodType.Moore2;
-            }
-        }
-
-        private InclusionsCreationTime ChooseInlcusionCreationTime()
-        {
-            if (BeginInclusionRadioButton.IsChecked == true)
-            {
-                return InclusionsCreationTime.Begin;
-            }
-            else
-            {
-                return InclusionsCreationTime.After;
-            }
-        }
-
-        private InclusionsType ChooseInclusionsType()
-        {
-            if (SquareRadioButton.IsChecked == true)
-            {
-                return InclusionsType.Square;
-            }
-            else
-            {
-                return InclusionsType.Circular;
-            }
-        }
-
-        private TypeOfNucleonsCreation ChooseTypeOfNucleonsCreation()
-        {
-            if (ConstantRadioButton_SRX.IsChecked == true)
-            {
-                return TypeOfNucleonsCreation.Constant;
-            }
-            else if (IncreasingRadioButton_SRX.IsChecked == true)
-            {
-                return TypeOfNucleonsCreation.Increasing;
-            }
-            else
-            {
-                return TypeOfNucleonsCreation.AtTheBeginning;
-            }
-        }
-
-        private EnergyDistribution ChooseEnegryDistribution()
-        {
-            if (HomogenousRadioButton_SRX.IsChecked == true)
-            {
-                return EnergyDistribution.Homogenous;
-            }
-            else
-            {
-                return EnergyDistribution.Heterogenous;
-            }
-        }
-
-        private PositionDistribiution ChoosePositionDistribution()
-        {
-            if (AnywhereRadioButton_SRX.IsChecked == true)
-            {
-                return PositionDistribiution.Anywhere;
-            }
-            else
-            {
-                return PositionDistribiution.OnGrainBoundaries;
-            }
-        }
-
-        private SubstructuresType ChooseSubstructuresType()
-        {
-            if (SubstrRadioButton1.IsChecked == true)
-            {
-                return SubstructuresType.Substructure;
-            }
-            else
-            {
-                return SubstructuresType.DualPhase;
-            }
-        }
-
-        private MethodType ChooseMethodType()
-        {
-            if (CellularAutomataRadioButton.IsChecked == true)
-            {
-                return MethodType.CellularAutomata;
-            }
-            else
-            {
-                return MethodType.MonteCarlo;
             }
         }
     }
