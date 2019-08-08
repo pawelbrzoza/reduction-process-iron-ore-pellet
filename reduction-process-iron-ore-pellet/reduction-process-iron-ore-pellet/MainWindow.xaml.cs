@@ -23,77 +23,84 @@ namespace grain_growth
     /// 
     public partial class MainWindow : Window
     {
-        private Stopwatch stopWatch;
-        private static System.Timers.Timer aTimer;
-        private SynchronizationContext mainThread = SynchronizationContext.Current;
+        private const double RADIOUS_AREA = 148.0;
+        private const double CIRCLE_AREA = Math.PI * RADIOUS_AREA * RADIOUS_AREA;
+        private const int NUMBER_OF_PHASES = 4;
+        
         private Models.Properties properties;
+        private Phase[] phases;
+
         private DispatcherTimer mainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 1) };
         private DispatcherTimer tempteratureDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 1) };
+
         private Bitmap mainBitmap;
         private FastBitmap fastBitmap;
-        private Range range, range2, range3, range4;
-        private bool phaseFe2O3Started, phaseFe3O4Started, phaseFeOStarted, phaseFeStarted;
+        private SynchronizationContext mainThread = SynchronizationContext.Current;
+        private Stopwatch stopWatch;
 
         public MainWindow()
         {
             InitializeComponent();
+            phases = InitializeArray.Init<Phase>(4);
             SetProperties();
-            mainDispatcher.Tick += DispatcherTick;
+            mainDispatcher.Tick += PhasesDispatcherTick;
             tempteratureDispatcher.Tick += TemperaturDispatcherTick;
             if (mainThread == null) mainThread = new SynchronizationContext();
             ConstantGrowthRadioButton.IsChecked = true;
         }
 
-        private static void SetTimer()
-        {
-            // Create a timer with a two second interval.
-            aTimer = new System.Timers.Timer(1000);
-            // Hook up the Elapsed event for the timer. 
-            aTimer.Elapsed += OnTimedEvent;
-            aTimer.AutoReset = true;
-            aTimer.Enabled = true;
-        }
-
-        private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
-        {
-            Console.WriteLine("The Elapsed event was raised at {0:HH:mm:ss.fff}",
-                              e.SignalTime);
-        }
-
         private void SetProperties()
         {
-            phaseFe2O3Started = phaseFe3O4Started = phaseFeOStarted = phaseFeStarted = false;
+            mainBitmap = new Bitmap((int)PelletImage.Width, (int)PelletImage.Height);
 
             properties = new Models.Properties()
             {
-                RangeWidth =            (int)PelletImage.Width,
-                RangeHeight =           (int)PelletImage.Height,
-                AmountOfGrains = int.Parse(NumOfGrainsTextBox.Text),
-                NeighbourhoodType = ChooseNeighbourhoodType(),
-                CurrGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
-                GrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
-                CurrTemperature =       0,
-                RiseOfTemperature = int.Parse(RiseOfTemperatureTextBox.Text),
-                MaxTemperature = int.Parse(MaxTemperatureTextBox.Text),
-                Fe2O3Temperature = int.Parse(Fe2O3TextBox.Text),
-                Fe3O4Temperature = int.Parse(Fe3O4TextBox.Text),
-                FeOTemperature = int.Parse(FeOTextBox.Text),
-                FeTemperature = int.Parse(FeTextBox.Text)
+                RangeWidth =                (int)PelletImage.Width,
+                RangeHeight =               (int)PelletImage.Height,
+                AmountOfGrains =            int.Parse(NumOfGrainsTextBox.Text),
+                NeighbourhoodType =         ChooseNeighbourhoodType(),
+                CurrGrowthProbability =     int.Parse(GrowthProbabilityTextBox.Text),
+                ConstGrowthProbability =    int.Parse(GrowthProbabilityTextBox.Text),
+                CurrTemperature =           0,
+                RiseOfTemperature =         int.Parse(RiseOfTemperatureTextBox.Text),
+                MaxTemperature =            int.Parse(MaxTemperatureTextBox.Text),
+                BufferTemperature =         0
             };
 
-            range =  InitStructures.InitCellularAutomata(properties, Color.Black);
-            range2 = InitStructures.InitCellularAutomata(properties, Color.Black);
-            range3 = InitStructures.InitCellularAutomata(properties, Color.Black);
-            range4 = InitStructures.InitCellularAutomata(properties, Color.Black);
+            phases[0].Name = "Fe2O3";
+            phases[1].Name = "Fe3O4";
+            phases[2].Name = "FeO";
+            phases[3].Name = "Fe";
 
-            mainBitmap = new Bitmap((int)PelletImage.Width, (int)PelletImage.Height);
+            for (int i = 0; i < NUMBER_OF_PHASES; i++)
+            {
+                phases[i].Range = InitStructures.InitCellularAutomata(properties, Color.Black);
+                phases[i].Percentage = 0;
+                phases[i].Started = false;
+            }
+
+            phases[0].TemperaturePoint = int.Parse(Fe2O3TextBox.Text);
+            phases[1].TemperaturePoint = int.Parse(Fe3O4TextBox.Text);
+            phases[2].TemperaturePoint = int.Parse(FeOTextBox.Text);
+            phases[3].TemperaturePoint = int.Parse(FeTextBox.Text);
+
+            phases[0].Color = Converters.WindowsToDrawingColor(Fe2O3ColorPicker.SelectedColor.Value);
+            phases[1].Color = Converters.WindowsToDrawingColor(Fe3O4ColorPicker.SelectedColor.Value);
+            phases[2].Color = Converters.WindowsToDrawingColor(FeOColorPicker.SelectedColor.Value);
+            phases[3].Color = Converters.WindowsToDrawingColor(FeColorPicker.SelectedColor.Value);
+
+            phases[0].GrowthProbability = Int32.Parse(Fe2O3PropabilityTextBox.Text);
+            phases[1].GrowthProbability = Int32.Parse(Fe3O4PropabilityTextBox.Text);
+            phases[2].GrowthProbability = Int32.Parse(FeOPropabilityTextBox.Text);
+            phases[3].GrowthProbability = Int32.Parse(FePropabilityTextBox.Text);
         }
 
         private void TemperaturDispatcherTick(object sender, EventArgs e)
         {
             if (properties.CurrTemperature < properties.MaxTemperature)
             {
-                properties.CurrTemperature = (int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature;
+                properties.CurrTemperature = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature)
+                    - properties.BufferTemperature;
                 temperatureLabel.Content = Convert.ToString((int)properties.CurrTemperature);
             }
             else if (properties.CurrTemperature >= properties.MaxTemperature && mainDispatcher.IsEnabled)
@@ -103,182 +110,99 @@ namespace grain_growth
                 {
                     Mouse.OverrideCursor = null;
                 });
-                aTimer.Stop();
-                aTimer.Dispose();
+
                 mainDispatcher.Stop();
                 tempteratureDispatcher.Stop();
             }
         }
 
-        private void DispatcherTick(object sender, EventArgs e)
+        private void PhasesDispatcherTick(object sender, EventArgs e)
         {
-            if (properties.CurrTemperature >= properties.Fe2O3Temperature)
+            for (int p = 0; p < NUMBER_OF_PHASES; p++)
             {
-                if (!phaseFe2O3Started)
+                phases[p].Counter = 0;
+
+                if (properties.CurrTemperature >= phases[p].TemperaturePoint)
                 {
-                    PhaseFe2O3(ObjectCopier.Clone(properties));
-                    Console.WriteLine("Start Fe2O3 phase");
+                    if (!phases[p].Started)
+                    {
+                        PhaseGenerator(ObjectCopier.Clone(properties), p);
+                        phases[p].Started = true;
+                        Console.WriteLine("Start " + phases[p].Name + " phase");
+                    }
                 }
-            }
-            using (fastBitmap = mainBitmap.FastLock())
-            {
-                for (int i = 1; i < mainBitmap.Width - 1; ++i)
-                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                        if (!SpecialId.IsSpecialId(range.GrainsArray[i, j].Id))
-                            fastBitmap.SetPixel(i, j, range.GrainsArray[i, j].Color);
+                using (fastBitmap = mainBitmap.FastLock())
+                {
+                    for (int i = 1; i < mainBitmap.Width - 1; ++i)
+                        for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                            if (!SpecialId.IsSpecialId(phases[p].Range.GrainsArray[i, j].Id))
+                            {
+                                fastBitmap.SetPixel(i, j, phases[p].Range.GrainsArray[i, j].Color);
+                                ++phases[p].Counter;
+                            }
+                }
             }
 
-            if (properties.CurrTemperature >= properties.Fe3O4Temperature)
-            {
-                if (!phaseFe3O4Started)
-                {
-                    PhaseFe3O4(ObjectCopier.Clone(properties));
-                    Console.WriteLine("Start Fe3O4 phase");
-                }
-            }
-            using (fastBitmap = mainBitmap.FastLock())
-            {
-                for (int i = 1; i < mainBitmap.Width - 1; ++i)
-                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                        if (!SpecialId.IsSpecialId(range2.GrainsArray[i, j].Id))
-                            fastBitmap.SetPixel(i, j, range2.GrainsArray[i, j].Color);
-            }
-
-            if (properties.CurrTemperature >= properties.FeOTemperature)
-            {
-                if (!phaseFeOStarted)
-                {
-                    PhaseFeO(ObjectCopier.Clone(properties));
-                    Console.WriteLine("Start FeO phase");
-                }
-            }
-            using (fastBitmap = mainBitmap.FastLock())
-            {
-                for (int i = 1; i < mainBitmap.Width - 1; ++i)
-                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                        if (!SpecialId.IsSpecialId(range3.GrainsArray[i, j].Id))
-                            fastBitmap.SetPixel(i, j, range3.GrainsArray[i, j].Color);
-            }
-
-            if (properties.CurrTemperature >= properties.FeTemperature)
-            {
-                if (!phaseFeStarted)
-                {
-                    PhaseFe(ObjectCopier.Clone(properties));
-                    Console.WriteLine("Start Fe phase");
-                }
-            }
-            using (fastBitmap = mainBitmap.FastLock())
-            {
-                for (int i = 1; i < mainBitmap.Width - 1; ++i)
-                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                        if (!SpecialId.IsSpecialId(range4.GrainsArray[i, j].Id))
-                            fastBitmap.SetPixel(i, j, range4.GrainsArray[i, j].Color);
-            }
             PelletImage.Source = Converters.BitmapToImageSource(mainBitmap);
+            PhasePercentageUpdate();
         }
 
-        private async void PhaseFe2O3(Models.Properties proper)
+        private async void PhaseGenerator(Models.Properties properties, int p)
         {
-            phaseFe2O3Started = true;
             CellularAutomata ca = new CellularAutomata();
-            Range currRange = new Range();
-            Range prevRange = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(Fe2O3ColorPicker.SelectedColor.Value));
+            Range currRange;
+            Range prevRange = InitStructures.InitCellularAutomata(this.properties, phases[p].Color);
 
             if (PhasesGrowthRadioButton.IsChecked == true)
-                proper.CurrGrowthProbability = Int32.Parse(Fe2O3PropabilityTextBox.Text);
+                properties.CurrGrowthProbability = phases[p].GrowthProbability;
+            else if(ProgresiveGrowthRadioButton.IsChecked == true)
+                properties.CurrGrowthProbability = 100 / NUMBER_OF_PHASES * (p+1);
 
             await Task.Factory.StartNew(() =>
             {
-                while (properties.CurrTemperature < properties.MaxTemperature)
+                while (this.properties.CurrTemperature < this.properties.MaxTemperature)
                 {
-                    currRange = ca.Grow(prevRange, proper);
+                    currRange = ca.Grow(prevRange, properties);
                     prevRange = currRange;
 
                     mainThread.Send((object state) => {
-                        range = currRange;
+                        phases[p].Range = currRange;
                     }, null);
                 }
             });
-            Console.WriteLine("Stop Fe2O3 phase");
+            Console.WriteLine("Stop " + phases[p].Name + " phase");
         }
 
-        private async void PhaseFe3O4(Models.Properties proper2)
+        private void PhasePercentageUpdate()
         {
-            phaseFe3O4Started = true;
-            CellularAutomata ca2 = new CellularAutomata();
-            Range currRange2 = new Range();
-            Range prevTange2 = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(Fe3O4ColorPicker.SelectedColor.Value));
+            phases[3].Percentage = (phases[3].Counter / CIRCLE_AREA) * 100;
 
-            if (PhasesGrowthRadioButton.IsChecked == true)
-                proper2.CurrGrowthProbability = Int32.Parse(Fe3O4PropabilityTextBox.Text);
+            phases[2].Percentage = ((phases[2].Counter / CIRCLE_AREA) * 100)
+                - phases[3].Percentage;
 
-            await Task.Factory.StartNew(() =>
-            {
-                while (properties.CurrTemperature < properties.MaxTemperature)
-                {
-                    currRange2 = ca2.Grow(prevTange2, proper2);
-                    prevTange2 = currRange2;
+            phases[1].Percentage = ((phases[1].Counter / CIRCLE_AREA) * 100)
+                - phases[2].Percentage - phases[3].Percentage;
 
-                    mainThread.Send((object state) =>
-                    {
-                        range2 = currRange2;
-                    }, null);
-                }
-            });
-            Console.WriteLine("Stop Fe3O4 phase");
+            phases[0].Percentage = ((phases[0].Counter / CIRCLE_AREA) * 100)
+                - phases[1].Percentage - phases[2].Percentage - phases[3].Percentage;
+
+            fe2O3Label.Content = Math.Round(phases[0].Percentage, 2);
+            fe3O4Label.Content = Math.Round(phases[1].Percentage, 2);
+            feOLabel.Content = Math.Round(phases[2].Percentage, 2);
+            feLabel.Content = Math.Round(phases[3].Percentage, 2);
         }
 
-        private async void PhaseFeO(Models.Properties proper3)
+        private async void BufferTempteraturLoading()
         {
-            phaseFeOStarted = true;
-            CellularAutomata ca3 = new CellularAutomata();
-            Range currRange3 = new Range();
-            Range prevTange3 = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(FeOColorPicker.SelectedColor.Value));
-
-            if (PhasesGrowthRadioButton.IsChecked == true)
-                proper3.CurrGrowthProbability = Int32.Parse(FeOPropabilityTextBox.Text);
-
+            int temp_time = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature);
             await Task.Factory.StartNew(() =>
             {
-                while (properties.CurrTemperature < properties.MaxTemperature)
-                {
-                    currRange3 = ca3.Grow(prevTange3, proper3);
-                    prevTange3 = currRange3;
+                while (!tempteratureDispatcher.IsEnabled) { }
 
-                    mainThread.Send((object state) =>
-                    {
-                        range3 = currRange3;
-                    }, null);
-                }
+                mainThread.Send((object state) => {
+                    properties.BufferTemperature += ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature) - temp_time;
+                }, null);
             });
-            Console.WriteLine("Stop FeO phase");
-        }
-
-        private async void PhaseFe(Models.Properties proper4)
-        {
-            phaseFeStarted = true;
-            CellularAutomata ca4 = new CellularAutomata();
-            Range currRange4 = new Range();
-            Range prevTange4 = InitStructures.InitCellularAutomata(properties, Converters.WindowsToDrawingColor(FeColorPicker.SelectedColor.Value));
-
-            if (PhasesGrowthRadioButton.IsChecked == true)
-                proper4.CurrGrowthProbability = Int32.Parse(FePropabilityTextBox.Text);
-
-            await Task.Factory.StartNew(() =>
-            {
-                while (properties.CurrTemperature < properties.MaxTemperature)
-                {
-                    currRange4 = ca4.Grow(prevTange4, proper4);
-                    prevTange4 = currRange4;
-
-                    mainThread.Send((object state) =>
-                    {
-                        range4 = currRange4;
-                    }, null);
-                }
-            });
-            Console.WriteLine("Stop Fe phase");
         }
 
         private void Play_Button_Click(object sender, RoutedEventArgs e)
@@ -288,7 +212,6 @@ namespace grain_growth
             });
 
             SetProperties();
-            SetTimer();
             stopWatch = Stopwatch.StartNew();
             mainDispatcher.Start();
             tempteratureDispatcher.Start();
@@ -304,6 +227,7 @@ namespace grain_growth
 
             mainDispatcher.Stop();
             tempteratureDispatcher.Stop();
+            BufferTempteraturLoading();
         }
 
         private void Resume_Button_Click(object sender, RoutedEventArgs e)
@@ -318,18 +242,19 @@ namespace grain_growth
             tempteratureDispatcher.Start();
         }
 
-        private void Start_Temp_Button_Click(object sender, RoutedEventArgs e)
-        {
-            StartTemperatureButton.Visibility = Visibility.Hidden;
-            StopTemperatureButton.Visibility = Visibility.Visible;
-            tempteratureDispatcher.Start();
-        }
-
         private void Stop_Temp_Button_Click(object sender, RoutedEventArgs e)
         {
             StartTemperatureButton.Visibility = Visibility.Visible;
             StopTemperatureButton.Visibility = Visibility.Hidden;
             tempteratureDispatcher.Stop();
+            BufferTempteraturLoading();
+        }
+
+        private void Start_Temp_Button_Click(object sender, RoutedEventArgs e)
+        {
+            StartTemperatureButton.Visibility = Visibility.Hidden;
+            StopTemperatureButton.Visibility = Visibility.Visible;
+            tempteratureDispatcher.Start();
         }
 
         private void ConstantGrowthRadioButton_Checked(object sender, RoutedEventArgs e)

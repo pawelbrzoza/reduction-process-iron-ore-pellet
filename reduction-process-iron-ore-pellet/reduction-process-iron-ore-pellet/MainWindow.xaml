@@ -59,7 +59,7 @@
                     Canvas.Left="260" Canvas.Top="330"/>
 
             <Label Content="Temperature points of new phases:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="321" Canvas.Left="19" Canvas.Top="379"/>
-            <Label Content="Fe2O3" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="66" Canvas.Left="19" Canvas.Top="417"/>
+            <Label Content="Fe2O3" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="19" Canvas.Top="417"/>
             <Label Content="Fe3O4" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="66" Canvas.Left="114" Canvas.Top="417"/>
             <Label Content="FeO" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="45" Canvas.Left="215" Canvas.Top="417"/>
             <Label Content="Fe" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="41" Canvas.Left="310" Canvas.Top="417"/>
@@ -94,13 +94,21 @@
             <Label Content="Rise of temperature [ms]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="226" Canvas.Left="19" Canvas.Top="647"/>
             <TextBox x:Name="RiseOfTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100"
                     Canvas.Left="294" Canvas.Top="650"/>
+            <Label Content="Fe2O3 [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="410" Canvas.Top="477"/>
+            <Label x:Name="fe2O3Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="80" Canvas.Left="515" Canvas.Top="477"/>
+            <Label Content="Fe3O4 [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="410" Canvas.Top="510"/>
+            <Label x:Name="fe3O4Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="80" Canvas.Left="515" Canvas.Top="510"/>
+            <Label Content="FeO [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="85" Canvas.Left="595" Canvas.Top="477"/>
+            <Label x:Name="feOLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="685" Canvas.Top="477"/>
+            <Label Content="Fe [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="610" Canvas.Top="510" RenderTransformOrigin="0.736,0.594"/>
+            <Label x:Name="feLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="685" Canvas.Top="510"/>
         </Canvas>
 
         <Canvas>
-            <Label Content="number of grains:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="22" Foreground="White" FontWeight="Bold" Grid.Column="1" Height="40" Width="189" Canvas.Left="421" Canvas.Top="107"/>
-            <TextBox x:Name="NumOfGrainsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100" Grid.Column="1" Canvas.Left="630" Canvas.Top="113"/>
+            <Label Content="Number of grains:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Grid.Column="1" Height="40" Width="165" Canvas.Left="400" Canvas.Top="97"/>
+            <TextBox x:Name="NumOfGrainsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100" Grid.Column="1" Canvas.Left="610" Canvas.Top="99"/>
 
-            <Grid Grid.ColumnSpan="3" Height="300" Width="300" Canvas.Left="450" Canvas.Top="205">
+            <Grid Grid.ColumnSpan="3" Height="300" Width="300" Canvas.Left="430" Canvas.Top="165">
                 <Canvas VerticalAlignment="Top">
                     <Canvas.OpacityMask>
                         <VisualBrush Visual="{Binding ElementName=Mask}" />
@@ -111,15 +119,15 @@
             </Grid>
 
             <Button Content="Generate" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Play_Button_Click" Grid.Column="1"
-                    Canvas.Left="450" Canvas.Top="555"/>
+                    Canvas.Left="430" Canvas.Top="575"/>
             <Button x:Name="StopButton" Content="Stop" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Stop_Button_Click"
-                Canvas.Left="610" Canvas.Top="555"/>
+                Canvas.Left="590" Canvas.Top="575"/>
             <Button x:Name="ResumeButton" Visibility="Hidden" Content="Resume" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Resume_Button_Click"
-                Canvas.Left="610" Canvas.Top="555"/>
+                Canvas.Left="590" Canvas.Top="575"/>
             <Button x:Name="StopTemperatureButton" Content="Stop temperature" HorizontalAlignment="Center" VerticalAlignment="Top" Width="165" Height="26" FontSize="16"
-                Canvas.Left="520" Canvas.Top="625" Click="Stop_Temp_Button_Click"/>
+                Canvas.Left="500" Canvas.Top="632" Click="Stop_Temp_Button_Click"/>
             <Button x:Name="StartTemperatureButton" Visibility="Hidden" Content="Start temperature" HorizontalAlignment="Center" VerticalAlignment="Top" Width="165" Height="26" FontSize="16"
-                Canvas.Left="520" Canvas.Top="625" Click="Start_Temp_Button_Click"/>
+                Canvas.Left="500" Canvas.Top="632" Click="Start_Temp_Button_Click"/>
         </Canvas>
     </Grid>
 </Window>

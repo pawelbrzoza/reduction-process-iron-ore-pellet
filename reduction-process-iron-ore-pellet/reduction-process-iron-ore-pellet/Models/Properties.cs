@@ -12,7 +12,9 @@ namespace grain_growth.Models
 
         public int AmountOfGrains { get; set; }
 
-        public double CurrGrowthProbability { get; set; }
+        public int CurrGrowthProbability { get; set; }
+
+        public int ConstGrowthProbability { get; set; }
 
         public int MaxTemperature { get; set; }
 
@@ -20,15 +22,7 @@ namespace grain_growth.Models
 
         public int RiseOfTemperature { get; set; }
 
-        public double GrowthProbability { get; set; }
-
-        public double Fe2O3Temperature { get; set; }
-
-        public double Fe3O4Temperature { get; set; }
-
-        public double FeOTemperature { get; set; }
-
-        public double FeTemperature { get; set; }
+        public int BufferTemperature { get; set; }
 
         public NeighbourhoodType NeighbourhoodType { get; set; }
     }
