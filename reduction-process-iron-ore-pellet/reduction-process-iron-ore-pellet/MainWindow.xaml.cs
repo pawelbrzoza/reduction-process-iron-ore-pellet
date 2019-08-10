@@ -23,25 +23,24 @@ namespace grain_growth
     /// 
     public partial class MainWindow : Window
     {
-        private const double RADIOUS_AREA = 148.0;
+        private const double RADIOUS_AREA = 149.0;
         private const double CIRCLE_AREA = Math.PI * RADIOUS_AREA * RADIOUS_AREA;
         private const int NUMBER_OF_PHASES = 4;
-        
-        private Models.Properties properties;
-        private Phase[] phases;
 
-        private DispatcherTimer mainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 1) };
-        private DispatcherTimer tempteratureDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 1) };
+        private Models.Properties properties;
+        private readonly Phase[] phases = InitializeArray.Init<Phase>(NUMBER_OF_PHASES);
+
+        private readonly DispatcherTimer mainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 0) };
+        private readonly DispatcherTimer tempteratureDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 0) };
 
         private Bitmap mainBitmap;
         private FastBitmap fastBitmap;
-        private SynchronizationContext mainThread = SynchronizationContext.Current;
+        private readonly SynchronizationContext mainThread = SynchronizationContext.Current;
         private Stopwatch stopWatch;
 
         public MainWindow()
         {
             InitializeComponent();
-            phases = InitializeArray.Init<Phase>(4);
             SetProperties();
             mainDispatcher.Tick += PhasesDispatcherTick;
             tempteratureDispatcher.Tick += TemperaturDispatcherTick;
@@ -55,16 +54,16 @@ namespace grain_growth
 
             properties = new Models.Properties()
             {
-                RangeWidth =                (int)PelletImage.Width,
-                RangeHeight =               (int)PelletImage.Height,
-                AmountOfGrains =            int.Parse(NumOfGrainsTextBox.Text),
-                NeighbourhoodType =         ChooseNeighbourhoodType(),
-                CurrGrowthProbability =     int.Parse(GrowthProbabilityTextBox.Text),
-                ConstGrowthProbability =    int.Parse(GrowthProbabilityTextBox.Text),
-                CurrTemperature =           0,
-                RiseOfTemperature =         int.Parse(RiseOfTemperatureTextBox.Text),
-                MaxTemperature =            int.Parse(MaxTemperatureTextBox.Text),
-                BufferTemperature =         0
+                RangeWidth = (int)PelletImage.Width,
+                RangeHeight = (int)PelletImage.Height,
+                AmountOfGrains = int.Parse(NumOfGrainsTextBox.Text),
+                NeighbourhoodType = ChooseNeighbourhoodType(),
+                CurrGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
+                ConstGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
+                CurrTemperature = 0,
+                RiseOfTemperature = int.Parse(RiseOfTemperatureTextBox.Text),
+                MaxTemperature = int.Parse(MaxTemperatureTextBox.Text),
+                BufferTemperature = 0
             };
 
             phases[0].Name = "Fe2O3";
@@ -74,7 +73,7 @@ namespace grain_growth
 
             for (int i = 0; i < NUMBER_OF_PHASES; i++)
             {
-                phases[i].Range = InitStructures.InitCellularAutomata(properties, Color.Black);
+                phases[i].Range = InitStructure.InitCellularAutomata(properties, Color.Black);
                 phases[i].Percentage = 0;
                 phases[i].Started = false;
             }
@@ -101,7 +100,7 @@ namespace grain_growth
             {
                 properties.CurrTemperature = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature)
                     - properties.BufferTemperature;
-                temperatureLabel.Content = Convert.ToString((int)properties.CurrTemperature);
+                temperatureLabel.Content = Convert.ToString(properties.CurrTemperature);
             }
             else if (properties.CurrTemperature >= properties.MaxTemperature && mainDispatcher.IsEnabled)
             {
@@ -149,14 +148,14 @@ namespace grain_growth
 
         private async void PhaseGenerator(Models.Properties properties, int p)
         {
-            CellularAutomata ca = new CellularAutomata();
             Range currRange;
-            Range prevRange = InitStructures.InitCellularAutomata(this.properties, phases[p].Color);
+            Range prevRange = InitStructure.InitCellularAutomata(this.properties, phases[p].Color);
+            CellularAutomata ca = new CellularAutomata();
 
             if (PhasesGrowthRadioButton.IsChecked == true)
                 properties.CurrGrowthProbability = phases[p].GrowthProbability;
-            else if(ProgresiveGrowthRadioButton.IsChecked == true)
-                properties.CurrGrowthProbability = 100 / NUMBER_OF_PHASES * (p+1);
+            else if (ProgresiveGrowthRadioButton.IsChecked == true)
+                properties.CurrGrowthProbability = 100 / NUMBER_OF_PHASES * (p + 1);
 
             await Task.Factory.StartNew(() =>
             {
@@ -212,9 +211,9 @@ namespace grain_growth
             });
 
             SetProperties();
-            stopWatch = Stopwatch.StartNew();
             mainDispatcher.Start();
             tempteratureDispatcher.Start();
+            stopWatch = Stopwatch.StartNew();
         }
 
         private void Stop_Button_Click(object sender, RoutedEventArgs e)
@@ -299,7 +298,7 @@ namespace grain_growth
             //{
             //    PelletImage.Source = Converters.BitmapToImageSource(new Bitmap(openfiledialog.FileName));
             //    currRange.StructureBitmap = new Bitmap(openfiledialog.FileName);
-                
+
             //    CellularAutomata.UpdateGrainsArray(currRange);
             //    for (int i = 0; i < currRange.Width; i++)
             //        for (int j = 0; j < currRange.Height; j++)
@@ -334,9 +333,11 @@ namespace grain_growth
 
         private void ExportBitmap_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog save = new SaveFileDialog();
-            save.Filter = "Bitmap Image|*.bmp";
-            save.Title = "Save an Image File";
+            SaveFileDialog save = new SaveFileDialog
+            {
+                Filter = "Bitmap Image|*.bmp",
+                Title = "Save an Image File"
+            };
             if (save.ShowDialog() == true)
             {
                 var image = PelletImage.Source;
@@ -348,12 +349,14 @@ namespace grain_growth
                 }
             }
         }
-    
+
         private void ExportTXT_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog save = new SaveFileDialog();
-            save.Filter = "Bitmap Image|*.txt";
-            save.Title = "Save an Image File";
+            SaveFileDialog save = new SaveFileDialog
+            {
+                Filter = "Bitmap Image|*.txt",
+                Title = "Save an Image File"
+            };
             if (save.ShowDialog() == true)
             {
                 var image = PelletImage.Source;

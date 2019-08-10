@@ -5,11 +5,11 @@ using grain_growth.Models;
 
 namespace grain_growth.Helpers
 {
-    public class InitStructures
+    public class InitStructure
     {
-        private static Random Random = new Random();
-
         public static Grain[] AllGrainsTypes;
+
+        public static readonly List<Point> PointsInside = InitStructure.GetPointsInsideCircle(149, new Point(150, 150));
 
         public static Range InitCellularAutomata(Models.Properties properties, Color grainColor)
         {
@@ -17,50 +17,19 @@ namespace grain_growth.Helpers
 
             Range tempRange = new Range(properties.RangeWidth, properties.RangeHeight);
 
-            // draw border of circle
-            DrawBlackCircle(tempRange, new Point(150, 150), 148);
-
             // init grains array by transparent (not used)
-            for (int i = 0; i < tempRange.Width; i++)
-                for (int j = 0; j < tempRange.Height; j++)
-                    if (tempRange.GrainsArray[i, j] == null)
-                        tempRange.GrainsArray[i, j] = new Grain()
-                        {
-                            Id = (int)SpecialId.Id.Transparent,
-                            Color = Color.White,
-                        };
+            GrainsArrayInit(tempRange);
 
             // init grains array by white color (empty grains)
-            UpdateInsideCircle(tempRange, new Point(150, 150));
+            UpdateInsideCircle(tempRange);
 
-            //// set random starting coordinates [x,y] and color for grains on circle boundary (equal sections*)
-            //Point coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
-            //for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
-            //{
-
-            //    double angle = grainNumber * (360 / properties.AmountOfGrains);
-            //    coordinates.X = (int)(150 + 148 * Math.Cos(angle));
-            //    coordinates.Y = (int)(150 + 148 * Math.Sin(angle));
-
-            //    AllGrainsTypes[grainNumber - 1] = new Grain()
-            //    {
-            //        Color = Color.FromArgb(Random.Next(10, 240), Random.Next(10, 240), Random.Next(2, 240)),
-            //        Id = grainNumber,
-            //    };
-
-            //    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
-            //    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
-            //}
-
-            // set random starting coordinates [x,y] and color for grains on circle boundary in random way
-            Point coordinates;
+            // set random starting coordinates [x,y] and color for grains on circle boundary (equal sections*)
+            Point coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height);
             for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
             {
-                do
-                {
-                    coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
-                }
-                while (tempRange.GrainsArray[coordinates.X, coordinates.Y].Id != -1);
+                double angle = grainNumber * (360 / properties.AmountOfGrains);
+                coordinates.X = (int)(150 + 149 * Math.Cos(angle));
+                coordinates.Y = (int)(150 + 149 * Math.Sin(angle));
 
                 AllGrainsTypes[grainNumber - 1] = new Grain()
                 {
@@ -71,6 +40,26 @@ namespace grain_growth.Helpers
                 tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
                 tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
             }
+
+            //// set random starting coordinates [x,y] and color for grains on circle boundary in random way
+            //Point coordinates;
+            //for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
+            //{
+            //    do
+            //    {
+            //        coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height, Random);
+            //    }
+            //    while (tempRange.GrainsArray[coordinates.X, coordinates.Y].Id != -1);
+
+            //    AllGrainsTypes[grainNumber - 1] = new Grain()
+            //    {
+            //        Color = grainColor,
+            //        Id = grainNumber,
+            //    };
+
+            //    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
+            //    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
+            //}
 
             //// set random starting coordinates [x,y] and color for grains inside circle
             //Point coordinates;
@@ -97,15 +86,24 @@ namespace grain_growth.Helpers
             return tempRange;
         }
 
+        public static void GrainsArrayInit(Range tempRange)
+        {
+            for (int i = 0; i < tempRange.Width; i++)
+                for (int j = 0; j < tempRange.Height; j++)
+                    if (tempRange.GrainsArray[i, j] == null)
+                        tempRange.GrainsArray[i, j] = new Grain()
+                        {
+                            Id = (int)SpecialId.Id.Transparent,
+                            Color = Color.White,
+                        };
+        }
+
         public static unsafe void SetPixel(Range tempRange, int x, int y)
         {
             if ((x >= 0) && (y >= 0) && (x < tempRange.Width) && (y < tempRange.Height))
             {
-                tempRange.GrainsArray[x, y] = new Grain()
-                {
-                    Id = (int)SpecialId.Id.Border,
-                    Color = Color.Black
-                };
+                tempRange.GrainsArray[x, y].Id = (int)SpecialId.Id.Border;
+                tempRange.GrainsArray[x, y].Color = Color.Black;
             }
         }
 
@@ -121,11 +119,11 @@ namespace grain_growth.Helpers
             SetPixel(tempRange, -x + x0, y + y0);
         }
 
-        public static void DrawBlackCircle(Range tempRange, Point point0, int radius)
+        public static void DrawBlackCircleBorder(Range tempRange)
         {
-            int x, y, x0, y0, d;
-            x0 = point0.X;
-            y0 = point0.Y;
+            int x, y, x0, y0, d, radius = tempRange.Height / 2;
+            x0 = radius;
+            y0 = radius;
             x = 0;
             y = radius;
             d = 5 - 4 * radius;
@@ -147,23 +145,19 @@ namespace grain_growth.Helpers
             }
         }
 
-        private static void UpdateInsideCircle(Range tempRange, Point center)
+        public static void UpdateInsideCircle(Range tempRange)
         {
-            var pointsInside = GetPointsInsideCircle(298 / 2, center);
-            foreach (var point in pointsInside)
+            foreach (var point in PointsInside)
             {
-                if (point.X < tempRange.Width && point.X > 0 && point.Y < tempRange.Height && point.Y > 0)
+                if (tempRange.GrainsArray[point.X, point.Y].Id == -9)
                 {
-                    if (tempRange.GrainsArray[point.X, point.Y].Id == -9)
-                    {
-                        tempRange.GrainsArray[point.X, point.Y].Color = Color.White;
-                        tempRange.GrainsArray[point.X, point.Y].Id = (int)SpecialId.Id.Empty;
-                    }
+                    tempRange.GrainsArray[point.X, point.Y].Color = Color.White;
+                    tempRange.GrainsArray[point.X, point.Y].Id = (int)SpecialId.Id.Empty;
                 }
             }
         }
 
-        private static List<Point> GetPointsInsideCircle(int radius, Point center)
+        public static List<Point> GetPointsInsideCircle(int radius, Point center)
         {
             List<Point> pointsInside = new List<Point>();
 
@@ -180,7 +174,7 @@ namespace grain_growth.Helpers
             return pointsInside;
         }
 
-        public static void AddBlackBorder(Range tempRange)
+        public static void DrawBlackSquareBorder(Range tempRange)
         {
             for (int i = 0; i < tempRange.Height; i++)
             {

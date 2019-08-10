@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using grain_growth.Helpers;
@@ -10,206 +9,162 @@ namespace grain_growth.Alghorithms
 {
     public class CellularAutomata
     {
-        private Random Random = new Random();
-        
+        private readonly Random Random = new Random();
+
+        private List<Grain> Neighbourhood;
+
         public Range Grow(Range prevRange, Models.Properties properties)
         {
             var currRange = new Range(prevRange.Width, prevRange.Height, true);
 
-            InitStructures.AddBlackBorder(currRange);
-            InitStructures.DrawBlackCircle(currRange, new Point(150,150), 148);
-            
-            var isGrowthMoore2 = properties.NeighbourhoodType == NeighbourhoodType.Moore2 ? true : false;
+            InitStructure.GrainsArrayInit(currRange);
+            InitStructure.UpdateInsideCircle(currRange);
 
-            List<Grain> neighbourhood = new List<Grain>();
-
-            for (int i = 1; i < prevRange.Width - 1; i++)
+            foreach (var p in InitStructure.PointsInside)
             {
-                for (int j = 1; j < prevRange.Height - 1; j++)
+                if (prevRange.GrainsArray[p.X, p.Y].Id != (int)SpecialId.Id.Empty)
                 {
-                    if (prevRange.GrainsArray[i, j].Id != (int)SpecialId.Id.Empty)
+                    // just init if there is already some color (not white)
+                    currRange.GrainsArray[p.X, p.Y].Id = prevRange.GrainsArray[p.X, p.Y].Id;
+                    currRange.GrainsArray[p.X, p.Y].Color = prevRange.GrainsArray[p.X, p.Y].Color;
+                }
+                else
+                {
+                    if (properties.NeighbourhoodType != NeighbourhoodType.Moore2)
                     {
-                        // just init if there is already some color (not white)
-                        currRange.GrainsArray[i, j] = prevRange.GrainsArray[i, j];
+                        switch (properties.NeighbourhoodType)
+                        {
+                            case NeighbourhoodType.Moore:
+                                Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                break;
+                            case NeighbourhoodType.Neumann:
+                                Neighbourhood = TakeNeumannNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                break;
+                        }
+
+                        var most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                                .GroupBy(g => g.Id);
+
+                        if (most.Any())
+                        {
+                            // assign grain which are the most in the list of neighborhoods 
+                            currRange.GrainsArray[p.X, p.Y] = most.OrderByDescending(g => g.Count())
+                                                                .Select(g => g.First()).First();
+                        }
                     }
                     else
                     {
-                        if (!isGrowthMoore2)
+                        // MOORE 2
+
+                        var isGrainUpdate = false;
+
+                        // rule 1 - ordinary moore
+                        Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+
+                        var most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                                .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
+
+                        if (most.Any())
                         {
-                            // ordinary types of growth - list of Moore or Neuman neighbourhood
-                            switch (properties.NeighbourhoodType)
+                            if (most.First().Count() >= 5 && most.First().Count() <= 8)
                             {
-                                case NeighbourhoodType.Moore:
-                                    neighbourhood = TakeMooreNeighbourhood(i, j, prevRange.GrainsArray);
-                                    break;
-                                case NeighbourhoodType.Neumann:
-                                    neighbourhood = TakeNeumannNeighbourhood(i, j, prevRange.GrainsArray);
-                                    break;
-                            }
-
-                            var most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
-                                                    .GroupBy(g => g.Id);
-
-                            if (most.Any())
-                            {
-                                // assign grain which are the most in the list of neighborhoods 
-                                currRange.GrainsArray[i, j] = most.OrderByDescending(g => g.Count())
-                                                                  .Select(g => g.First()).First();
+                                currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
                             }
                             else
                             {
-                                currRange.GrainsArray[i, j] = new Grain()
+                                // rule 2 - nearest moore
+                                Neighbourhood = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+
+                                most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                                    .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
+
+                                if (most.Any())
                                 {
-                                    Id = (int)SpecialId.Id.Empty,
-                                    Color = Color.White
-                                };
-                                currRange.IsFull = false;
-                            }
-                        }
-                        else
-                        {
-                            // MOORE 2
-
-                            var grainGrowth = false;
-
-                            // rule 1 - ordinary moore
-                            neighbourhood = TakeMooreNeighbourhood(i, j, prevRange.GrainsArray);
-
-                            var most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
-                                                    .GroupBy(g => g.Id);
-
-                            if (most.Any())
-                            {
-                                most = most.OrderByDescending(g => g.Count());
-
-                                if (most.First().Count() >= 5 && most.First().Count() <= 8)
-                                {
-                                    currRange.GrainsArray[i, j] = most.Select(g => g.First()).First();
-                                    grainGrowth = true;
+                                    if (most.First().Count() == 3)
+                                    {
+                                        currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
+                                        isGrainUpdate = true;
+                                    }
                                 }
-                                else
+                                if (!isGrainUpdate)
                                 {
-                                    // rule 2 - nearest moore
-                                    neighbourhood = TakeNearestMooreNeighbourhood(i, j, prevRange.GrainsArray);
+                                    // rule 3 - further moore
+                                    Neighbourhood = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                    most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
-                                                        .GroupBy(g => g.Id);
+                                    most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                                        .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                     if (most.Any())
                                     {
-                                        most = most.OrderByDescending(g => g.Count());
                                         if (most.First().Count() == 3)
                                         {
-                                            currRange.GrainsArray[i, j] = most.Select(g => g.First()).First();
-                                            grainGrowth = true;
+                                            currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
+                                            isGrainUpdate = true;
                                         }
                                     }
-                                    if (!grainGrowth)
-                                    {
-                                        // rule 3 - further moore
-                                        neighbourhood = TakeFurtherMooreNeighbourhood(i, j, prevRange.GrainsArray);
-
-                                        most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
-                                                            .GroupBy(g => g.Id);
-
-                                        if (most.Any())
-                                        {
-                                            most = most.OrderByDescending(g => g.Count());
-                                            if (most.First().Count() == 3)
-                                            {
-                                                currRange.GrainsArray[i, j] = most.Select(g => g.First()).First();
-                                                grainGrowth = true;
-                                            }
-                                        }
-                                    }
-                                    if (!grainGrowth)
+                                    if (!isGrainUpdate)
                                     {
                                         // rule 4 - ordinary moore with probability
-                                        neighbourhood = TakeMooreNeighbourhood(i, j, prevRange.GrainsArray);
+                                        Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                        most = neighbourhood.Where(g => (!SpecialId.IsSpecialId(g.Id)))
-                                                            .GroupBy(g => g.Id);
+                                        most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                                            .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
-                                        var randomProbability = Random.Next(0, 100);
-
-                                        if (most.Any() && (randomProbability <= properties.CurrGrowthProbability))
+                                        if (most.Any() && (Random.Next(0, 100) <= properties.CurrGrowthProbability))
                                         {
-                                            currRange.GrainsArray[i, j] = most.OrderByDescending(g => g.Count())
-                                                                                .Select(g => g.First()).First();
-                                            grainGrowth = true;
+                                            currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
+                                            isGrainUpdate = true;
                                         }
                                     }
                                 }
-                            }
-                            if (!grainGrowth)
-                            {
-                                // if grain not exist
-                                currRange.GrainsArray[i, j] = new Grain()
-                                {
-                                    Id = (int)SpecialId.Id.Empty,
-                                    Color = Color.White
-                                };
-                                currRange.IsFull = false;
                             }
                         }
                     }
                 }
             }
-            UpdateBitmap(currRange);
             return currRange;
         }
 
-        private List<Grain> TakeNeumannNeighbourhood(int i, int j, Grain[,] structureArray)
+        private List<Grain> TakeNeumannNeighbourhood(int i, int j, Grain[,] GrainsArray)
         {
-            var neighbourhood = new List<Grain>
+            return new List<Grain>
             {
-                structureArray[i, j + 1],
-                structureArray[i + 1, j],
-                structureArray[i - 1, j],
-                structureArray[i, j - 1],
-                
+                GrainsArray[i, j + 1],
+                GrainsArray[i + 1, j],
+                GrainsArray[i - 1, j],
+                GrainsArray[i, j - 1],
             };
-            return neighbourhood;
         }
 
-        private List<Grain> TakeMooreNeighbourhood(int i, int j, Grain[,] structureArray)
+        private List<Grain> TakeMooreNeighbourhood(int i, int j, Grain[,] GrainsArray)
         {
-            var neighbourhood = new List<Grain>
+            return new List<Grain>
             {
-                structureArray[i - 1, j],
-                structureArray[i + 1, j],
-                structureArray[i, j - 1],
-                structureArray[i, j + 1],
-                structureArray[i - 1, j - 1],
-                structureArray[i - 1, j + 1],
-                structureArray[i + 1, j - 1],
-                structureArray[i + 1, j + 1]
+                GrainsArray[i - 1, j],
+                GrainsArray[i + 1, j],
+                GrainsArray[i, j - 1],
+                GrainsArray[i, j + 1],
+                GrainsArray[i - 1, j - 1],
+                GrainsArray[i - 1, j + 1],
+                GrainsArray[i + 1, j - 1],
+                GrainsArray[i + 1, j + 1]
             };
-            return neighbourhood;
         }
 
-        private List<Grain> TakeNearestMooreNeighbourhood(int i, int j, Grain[,] structureArray)
+        private List<Grain> TakeNearestMooreNeighbourhood(int i, int j, Grain[,] GrainsArray)
         {
-            var neighbourhood = new List<Grain>
-            {
-                structureArray[i - 1, j],
-                structureArray[i + 1, j],
-                structureArray[i, j - 1],
-                structureArray[i, j + 1]
-            };
-            return neighbourhood;
+            return TakeNeumannNeighbourhood(i, j, GrainsArray);
         }
 
-        private List<Grain> TakeFurtherMooreNeighbourhood(int i, int j, Grain[,] structureArray)
+        private List<Grain> TakeFurtherMooreNeighbourhood(int i, int j, Grain[,] GrainsArray)
         {
-            var neighbourhood = new List<Grain>
+            return new List<Grain>
             {
-                structureArray[i - 1, j - 1],
-                structureArray[i - 1, j + 1],
-                structureArray[i + 1, j - 1],
-                structureArray[i + 1, j + 1]
+                GrainsArray[i - 1, j - 1],
+                GrainsArray[i - 1, j + 1],
+                GrainsArray[i + 1, j - 1],
+                GrainsArray[i + 1, j + 1]
             };
-            return neighbourhood;
         }
 
         public static void UpdateBitmap(Range range)

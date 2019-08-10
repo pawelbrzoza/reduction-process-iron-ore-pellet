@@ -5,9 +5,11 @@ namespace grain_growth.Helpers
 {
     public class RandomCoordinates
     {
-        public static Point Get(int width, int height, Random random)
+        public static Random Random = new Random();
+
+        public static Point Get(int width, int height)
         {
-            return new Point(random.Next(1, width - 1), random.Next(1, height - 1));
+            return new Point(Random.Next(1, width - 1), Random.Next(1, height - 1));
         }
     }
 }
