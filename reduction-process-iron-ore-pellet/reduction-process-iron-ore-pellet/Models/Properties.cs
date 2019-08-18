@@ -25,5 +25,7 @@ namespace grain_growth.Models
         public int BufferTemperature { get; set; }
 
         public NeighbourhoodType NeighbourhoodType { get; set; }
+
+        public StartingPointsType StartingPointsType { get; set; }
     }
 }

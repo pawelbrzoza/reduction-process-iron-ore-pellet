@@ -12,8 +12,8 @@ using System.IO;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using System.Threading;
-using FastBitmapLib;
 using System.Diagnostics;
+using System.Text;
 
 namespace grain_growth
 {
@@ -21,43 +21,44 @@ namespace grain_growth
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
+
     public partial class MainWindow : Window
     {
-        private const double RADIOUS_AREA = 149.0;
-        private const double CIRCLE_AREA = Math.PI * RADIOUS_AREA * RADIOUS_AREA;
-        private const int NUMBER_OF_PHASES = 4;
-
         private Models.Properties properties;
-        private readonly Phase[] phases = InitializeArray.Init<Phase>(NUMBER_OF_PHASES);
-
+        private readonly Phase[] phases = InitializeArray.Init<Phase>(Constants.NUMBER_OF_PHASES);
         private readonly DispatcherTimer mainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 0) };
-        private readonly DispatcherTimer tempteratureDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 0) };
-
+        private readonly DispatcherTimer tempteratureDispatcher = new DispatcherTimer();
         private Bitmap mainBitmap;
-        private FastBitmap fastBitmap;
         private readonly SynchronizationContext mainThread = SynchronizationContext.Current;
         private Stopwatch stopWatch;
+        private StringBuilder csv;
 
         public MainWindow()
         {
             InitializeComponent();
-            SetProperties();
             mainDispatcher.Tick += PhasesDispatcherTick;
             tempteratureDispatcher.Tick += TemperaturDispatcherTick;
             if (mainThread == null) mainThread = new SynchronizationContext();
+
             ConstantGrowthRadioButton.IsChecked = true;
+            Phase1NameLabel.Content = Phase1NameTextBox.Text;
+            Phase2NameLabel.Content = Phase2NameTextBox.Text;
+            Phase3NameLabel.Content = Phase3NameTextBox.Text;
+            Phase4NameLabel.Content = Phase4NameTextBox.Text;
         }
 
         private void SetProperties()
         {
             mainBitmap = new Bitmap((int)PelletImage.Width, (int)PelletImage.Height);
 
+            // properties
             properties = new Models.Properties()
             {
                 RangeWidth = (int)PelletImage.Width,
                 RangeHeight = (int)PelletImage.Height,
                 AmountOfGrains = int.Parse(NumOfGrainsTextBox.Text),
                 NeighbourhoodType = ChooseNeighbourhoodType(),
+                StartingPointsType = ChooseStartingPointsType(),
                 CurrGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
                 ConstGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
                 CurrTemperature = 0,
@@ -66,22 +67,41 @@ namespace grain_growth
                 BufferTemperature = 0
             };
 
-            phases[0].Name = "Fe2O3";
-            phases[1].Name = "Fe3O4";
-            phases[2].Name = "FeO";
-            phases[3].Name = "Fe";
+            // update constants
+            Constants.UpdateConstants(double.Parse(SizeOfPelletTextBox.Text));
 
-            for (int i = 0; i < NUMBER_OF_PHASES; i++)
+            // init inclusion points inside update area
+            InitInclusions.InitPoints(double.Parse(NumOfInclusionsTextBox.Text));
+
+            // init inclusion points inside update area
+            InitStructure.PointsArea = InitStructure.GetPointsInsideCircle((int)Constants.RADIOUS, Constants.MIDDLE_POINT);
+
+            // set phases
+            phases[0].Name = Phase1NameTextBox.Text;
+            phases[1].Name = Phase2NameTextBox.Text;
+            phases[2].Name = Phase3NameTextBox.Text;
+            phases[3].Name = Phase4NameTextBox.Text;
+
+            Phase1NameLabel.Content = Phase1NameTextBox.Text;
+            Phase2NameLabel.Content = Phase2NameTextBox.Text;
+            Phase3NameLabel.Content = Phase3NameTextBox.Text;
+            Phase4NameLabel.Content = Phase4NameTextBox.Text;
+
+            for (int i = 0; i < Constants.NUMBER_OF_PHASES; i++)
             {
-                phases[i].Range = InitStructure.InitCellularAutomata(properties, Color.Black);
+                phases[i].Range = new Range(properties.RangeWidth, properties.RangeWidth);
+                InitStructure.GrainsArrayInit(phases[i].Range);
+                InitStructure.UpdateInsideCircle(phases[i].Range);
+                InitStructure.DrawBlackCircleBorder(phases[i].Range);
+                InitInclusions.AddInclusions(phases[i].Range);
                 phases[i].Percentage = 0;
                 phases[i].Started = false;
             }
 
-            phases[0].TemperaturePoint = int.Parse(Fe2O3TextBox.Text);
-            phases[1].TemperaturePoint = int.Parse(Fe3O4TextBox.Text);
-            phases[2].TemperaturePoint = int.Parse(FeOTextBox.Text);
-            phases[3].TemperaturePoint = int.Parse(FeTextBox.Text);
+            phases[0].TemperaturePoint = int.Parse(Phase1TextBox.Text);
+            phases[1].TemperaturePoint = int.Parse(Phase2TextBox.Text);
+            phases[2].TemperaturePoint = int.Parse(Phase3TextBox.Text);
+            phases[3].TemperaturePoint = int.Parse(Phase4TextBox.Text);
 
             phases[0].Color = Converters.WindowsToDrawingColor(Fe2O3ColorPicker.SelectedColor.Value);
             phases[1].Color = Converters.WindowsToDrawingColor(Fe3O4ColorPicker.SelectedColor.Value);
@@ -92,10 +112,23 @@ namespace grain_growth
             phases[1].GrowthProbability = Int32.Parse(Fe3O4PropabilityTextBox.Text);
             phases[2].GrowthProbability = Int32.Parse(FeOPropabilityTextBox.Text);
             phases[3].GrowthProbability = Int32.Parse(FePropabilityTextBox.Text);
+
+            // phase 1 - initialization
+            phases[0].Started = true;
+            CellularAutomata.InstantFillColor(phases[0], 1, phases[0].Color);
+
+            // set temperature dispatcher
+            tempteratureDispatcher.Interval = new TimeSpan(0, 0, 0, 0, int.Parse(RiseOfTemperatureTextBox.Text));
+
+            // csv  file
+            csv = new StringBuilder();
+            var newLine = string.Format("{0};{1};{2};{3};{4}", "Temperature", phases[0].Name, phases[1].Name, phases[2].Name, phases[3].Name);
+            csv.AppendLine(newLine);
         }
 
         private void TemperaturDispatcherTick(object sender, EventArgs e)
         {
+            CollectData();
             if (properties.CurrTemperature < properties.MaxTemperature)
             {
                 properties.CurrTemperature = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature)
@@ -110,6 +143,12 @@ namespace grain_growth
                     Mouse.OverrideCursor = null;
                 });
 
+                var newLine = string.Format("Total time:;{0:f2};s\nInclusion:;{1};%", stopWatch.Elapsed.TotalSeconds, double.Parse(NumOfInclusionsTextBox.Text));
+                csv.AppendLine(newLine);
+
+                var file = string.Format("{0}{1}{2}", "../../data/results_", DateTime.Now.ToString("yyyyMMdd_hhmm_tt"), ".csv");
+                File.WriteAllText(file, csv.ToString());
+
                 mainDispatcher.Stop();
                 tempteratureDispatcher.Stop();
             }
@@ -117,7 +156,7 @@ namespace grain_growth
 
         private void PhasesDispatcherTick(object sender, EventArgs e)
         {
-            for (int p = 0; p < NUMBER_OF_PHASES; p++)
+            for (int p = 0; p < Constants.NUMBER_OF_PHASES; p++)
             {
                 phases[p].Counter = 0;
 
@@ -130,32 +169,25 @@ namespace grain_growth
                         Console.WriteLine("Start " + phases[p].Name + " phase");
                     }
                 }
-                using (fastBitmap = mainBitmap.FastLock())
-                {
-                    for (int i = 1; i < mainBitmap.Width - 1; ++i)
-                        for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                            if (!SpecialId.IsSpecialId(phases[p].Range.GrainsArray[i, j].Id))
-                            {
-                                fastBitmap.SetPixel(i, j, phases[p].Range.GrainsArray[i, j].Color);
-                                ++phases[p].Counter;
-                            }
-                }
+                CellularAutomata.UpdateBitmap(phases[p], mainBitmap);
             }
 
             PelletImage.Source = Converters.BitmapToImageSource(mainBitmap);
             PhasePercentageUpdate();
+            
         }
 
         private async void PhaseGenerator(Models.Properties properties, int p)
         {
             Range currRange;
             Range prevRange = InitStructure.InitCellularAutomata(this.properties, phases[p].Color);
+            InitInclusions.AddInclusions(prevRange);
             CellularAutomata ca = new CellularAutomata();
 
             if (PhasesGrowthRadioButton.IsChecked == true)
                 properties.CurrGrowthProbability = phases[p].GrowthProbability;
             else if (ProgresiveGrowthRadioButton.IsChecked == true)
-                properties.CurrGrowthProbability = 100 / NUMBER_OF_PHASES * (p + 1);
+                properties.CurrGrowthProbability = (100 / Constants.NUMBER_OF_PHASES) * (p + 1);
 
             await Task.Factory.StartNew(() =>
             {
@@ -174,21 +206,39 @@ namespace grain_growth
 
         private void PhasePercentageUpdate()
         {
-            phases[3].Percentage = (phases[3].Counter / CIRCLE_AREA) * 100;
+            phases[3].Percentage = (phases[3].Counter / Constants.CIRCLE_AREA) * 100;
+            phases[3].Percentage = Math.Round(phases[3].Percentage, 2);
 
-            phases[2].Percentage = ((phases[2].Counter / CIRCLE_AREA) * 100)
-                - phases[3].Percentage;
+            phases[2].Percentage = ((phases[2].Counter / Constants.CIRCLE_AREA) * 100)
+                 - phases[3].Percentage;
+            phases[2].Percentage = Math.Round(phases[2].Percentage, 2);
 
-            phases[1].Percentage = ((phases[1].Counter / CIRCLE_AREA) * 100)
-                - phases[2].Percentage - phases[3].Percentage;
+            phases[1].Percentage = ((phases[1].Counter / Constants.CIRCLE_AREA) * 100)
+                 - phases[2].Percentage - phases[3].Percentage;
+            phases[1].Percentage = Math.Round(phases[1].Percentage, 2);
 
-            phases[0].Percentage = ((phases[0].Counter / CIRCLE_AREA) * 100)
-                - phases[1].Percentage - phases[2].Percentage - phases[3].Percentage;
+            phases[0].Percentage = ((phases[0].Counter / Constants.CIRCLE_AREA) * 100)
+                 - phases[1].Percentage - phases[2].Percentage - phases[3].Percentage;
+            phases[0].Percentage = Math.Round(phases[0].Percentage, 2);
 
-            fe2O3Label.Content = Math.Round(phases[0].Percentage, 2);
-            fe3O4Label.Content = Math.Round(phases[1].Percentage, 2);
-            feOLabel.Content = Math.Round(phases[2].Percentage, 2);
-            feLabel.Content = Math.Round(phases[3].Percentage, 2);
+            Phase1Label.Content = phases[0].Percentage > 0 ? phases[0].Percentage : 0;
+            Phase2Label.Content = phases[1].Percentage > 0 ? phases[1].Percentage : 0;
+            Phase3Label.Content = phases[2].Percentage > 0 ? phases[2].Percentage : 0;
+            Phase4Label.Content = phases[3].Percentage > 0 ? phases[3].Percentage : 0;
+        }
+
+        private void CollectData()
+        {
+            //collectedData.Add(properties.CurrTemperature, phases[0].Percentage, phases[1].Percentage, phases[2].Percentage, phases[3].Percentage);
+            //Console.WriteLine("Temp.: " + properties.CurrTemperature + ", Fe2O3 [%]: " + phases[0].Percentage + ", Fe3O4 [%]: " + phases[1].Percentage
+            //                    + ", FeO [%]: " + phases[2].Percentage + ", Fe [%]: " + phases[3].Percentage);
+            var temperature = properties.CurrTemperature.ToString();
+            var phase0 = phases[0].Percentage.ToString();
+            var phase1 = phases[1].Percentage.ToString();
+            var phase2 = phases[2].Percentage.ToString();
+            var phase3 = phases[3].Percentage.ToString();
+            var newLine = string.Format("{0};{1};{2};{3};{4}", temperature, phase0, phase1, phase2, phase3);
+            csv.AppendLine(newLine);
         }
 
         private async void BufferTempteraturLoading()
@@ -209,10 +259,10 @@ namespace grain_growth
             Application.Current.Dispatcher.Invoke(() => {
                 Mouse.OverrideCursor = Cursors.Wait;
             });
-
+            
             SetProperties();
-            mainDispatcher.Start();
             tempteratureDispatcher.Start();
+            mainDispatcher.Start();
             stopWatch = Stopwatch.StartNew();
         }
 
@@ -387,6 +437,22 @@ namespace grain_growth
             else
             {
                 return NeighbourhoodType.Moore2;
+            }
+        }
+
+        private StartingPointsType ChooseStartingPointsType()
+        {
+            if (RandomBoundaryRadioButton.IsChecked == true)
+            {
+                return StartingPointsType.RandomBoundary;
+            }
+            else if (RegularBoundaryRadioButton.IsChecked == true)
+            {
+                return StartingPointsType.RegularBoundary;
+            }
+            else
+            {
+                return StartingPointsType.RandomInside;
             }
         }
     }

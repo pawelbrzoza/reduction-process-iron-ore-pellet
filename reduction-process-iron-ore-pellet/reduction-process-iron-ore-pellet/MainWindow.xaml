@@ -18,8 +18,8 @@
             <ColumnDefinition Width="400"/>
         </Grid.ColumnDefinitions>
 
-        <DockPanel Height="19" LastChildFill="False" VerticalAlignment="Top" Grid.ColumnSpan="2" Margin="0,0,6,0">
-            <Menu DockPanel.Dock="Top" Margin="0,0,-400,0" Width="1200">
+        <DockPanel Height="19" LastChildFill="False" VerticalAlignment="Top" Grid.ColumnSpan="2">
+            <Menu DockPanel.Dock="Top" Width="800">
                 <MenuItem Header="File">
                     <MenuItem Header="Microstructures">
                         <MenuItem Header="Import">
@@ -36,41 +36,51 @@
             </Menu>
         </DockPanel>
 
-        <Canvas IsEnabled="{Binding IsChecked, ElementName=CellularAutomataRadioButton}">
-            <Label Content="CELLULAR AUTOMATA" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="20" Foreground="White" FontWeight="Bold" Height="40" Width="221" Canvas.Left="294" Canvas.Top="30"/>
-            <Label Content="Type of growth:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="174" Canvas.Left="19" Canvas.Top="94"/>
-            <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Grid.ColumnSpan="3" Canvas.Left="250" Canvas.Top="94">
+        <Canvas>
+            <Label Content="CELLULAR AUTOMATA" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="20" Foreground="White" FontWeight="Bold" Height="40" Width="221" Canvas.Left="294" Canvas.Top="19"/>
+            <Label Content="Starting points:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="174" Canvas.Left="19" Canvas.Top="65"/>
+            <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Canvas.Left="250" Canvas.Top="64">
+                <RadioButton x:Name="RandomBoundaryRadioButton" Margin="2,2,2.4,2" IsChecked="True" Content="Random boundary" Foreground="White" />
+                <RadioButton x:Name="RegularBoundaryRadioButton" Margin="2,2,2.2,2" IsChecked="False" Content="Regular boundary" Foreground="White"/>
+                <RadioButton x:Name="RandomInsideRadioButton" Margin="2,2,2.2,2" IsChecked="False" Content="Random inside" Foreground="White"/>
+            </StackPanel>
+            <Label Content="Type of growth:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="174" Canvas.Left="19" Canvas.Top="135"/>
+            <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Grid.ColumnSpan="3" Canvas.Left="250" Canvas.Top="135">
                 <RadioButton x:Name="NeumannRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Von Neumann" Foreground="White" />
                 <RadioButton x:Name="MooreRadioButton" Margin="2,2,2.2,2" IsChecked="False" Content="Moore" Foreground="White"/>
                 <RadioButton x:Name="ExtendedMooreRadioButton" Margin="2,2,2.2,2" IsChecked="True" Content="Moore 2" Foreground="White"/>
             </StackPanel>
-            <Label Content="Type of growth phases:&#xD;&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="55" Width="216" Canvas.Left="19" Canvas.Top="170"/>
-            <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Canvas.Left="250" Canvas.Top="180">
+            <Label Content="Type of growth phases:&#xD;&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="55" Width="216" Canvas.Left="19" Canvas.Top="206"/>
+            <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Canvas.Left="250" Canvas.Top="206">
                 <RadioButton x:Name="ConstantGrowthRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Constant" Foreground="White" Checked="ConstantGrowthRadioButton_Checked"/>
                 <RadioButton x:Name="ProgresiveGrowthRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Progresive" Foreground="White" Checked="ProgresiveGrowthRadioButton_Checked" />
                 <RadioButton x:Name="PhasesGrowthRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Specific to phase" Foreground="White" Checked="PhasesGrowthRadioButton_Checked" />
             </StackPanel>
-            <Label Content="Constant probability [%]:&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="73" Width="236" Canvas.Left="19" Canvas.Top="263"/>
+            <Label Content="Constant probability [%]:&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="73" Width="236" Canvas.Left="19" Canvas.Top="276"/>
             <TextBox x:Name="GrowthProbabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
-                IsEnabled="False" Canvas.Left="260" Canvas.Top="263"/>
+                IsEnabled="False" Canvas.Left="260" Canvas.Top="278"/>
 
-            <Label Content="Max temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="174" Canvas.Left="19" Canvas.Top="327"/>
-            <TextBox x:Name="MaxTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="400"
-                    Canvas.Left="260" Canvas.Top="330"/>
+            <Label Content="Max temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="174" Canvas.Left="19" Canvas.Top="336"/>
+            <TextBox x:Name="MaxTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="1200"
+                    Canvas.Left="260" Canvas.Top="339"/>
 
             <Label Content="Temperature points of new phases:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="321" Canvas.Left="19" Canvas.Top="379"/>
-            <Label Content="Fe2O3" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="19" Canvas.Top="417"/>
-            <Label Content="Fe3O4" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="66" Canvas.Left="114" Canvas.Top="417"/>
-            <Label Content="FeO" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="45" Canvas.Left="215" Canvas.Top="417"/>
-            <Label Content="Fe" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="41" Canvas.Left="310" Canvas.Top="417"/>
+            <TextBox x:Name="Phase1NameTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="18" FontWeight="Bold" Text="Fe2O3"
+                Canvas.Left="19" Canvas.Top="420"/>
+            <TextBox x:Name="Phase2NameTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="18" FontWeight="Bold" Text="Fe3O4"
+                Canvas.Left="114" Canvas.Top="420"/>
+            <TextBox x:Name="Phase3NameTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="18" FontWeight="Bold" Text="FeO"
+                Canvas.Left="205" Canvas.Top="420"/>
+            <TextBox x:Name="Phase4NameTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="18" FontWeight="Bold"
+                Canvas.Left="294" Canvas.Top="420" Text="Fe"/>
 
-            <TextBox x:Name="Fe2O3TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="0"
-                    Canvas.Left="19" Canvas.Top="455"/>
-            <TextBox x:Name="Fe3O4TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
+            <TextBox x:Name="Phase1TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="0"
+                    IsEnabled="False" Canvas.Left="19" Canvas.Top="455"/>
+            <TextBox x:Name="Phase2TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="200"
                     Canvas.Left="114" Canvas.Top="455"/>
-            <TextBox x:Name="FeOTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100"
-                    Canvas.Left="205" Canvas.Top="455"/>
-            <TextBox x:Name="FeTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="150"
+            <TextBox x:Name="Phase3TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="700"
+                    Canvas.Left="205" Canvas.Top="457"/>
+            <TextBox x:Name="Phase4TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="900"
                     Canvas.Left="294" Canvas.Top="455"/>
 
             <Label Content="Colours:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="308" Canvas.Left="17" Canvas.Top="487"/>
@@ -89,45 +99,51 @@
             <TextBox x:Name="FePropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                 IsEnabled="False" Canvas.Left="294" Canvas.Top="598"/>
 
-            <Label Content="Current temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="196" Canvas.Left="19" Canvas.Top="684"/>
-            <Label x:Name="temperatureLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="66" Canvas.Left="294" Canvas.Top="684" RenderTransformOrigin="0.592,0.6"/>
+            <Label Content="Current temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="196" Canvas.Left="19" Canvas.Top="693"/>
+            <Label x:Name="temperatureLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="66" Canvas.Left="294" Canvas.Top="693" RenderTransformOrigin="0.592,0.6"/>
             <Label Content="Rise of temperature [ms]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="226" Canvas.Left="19" Canvas.Top="647"/>
             <TextBox x:Name="RiseOfTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100"
                     Canvas.Left="294" Canvas.Top="650"/>
-            <Label Content="Fe2O3 [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="410" Canvas.Top="477"/>
-            <Label x:Name="fe2O3Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="80" Canvas.Left="515" Canvas.Top="477"/>
-            <Label Content="Fe3O4 [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="410" Canvas.Top="510"/>
-            <Label x:Name="fe3O4Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="80" Canvas.Left="515" Canvas.Top="510"/>
-            <Label Content="FeO [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="85" Canvas.Left="595" Canvas.Top="477"/>
-            <Label x:Name="feOLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="685" Canvas.Top="477"/>
-            <Label Content="Fe [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="610" Canvas.Top="510" RenderTransformOrigin="0.736,0.594"/>
-            <Label x:Name="feLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="685" Canvas.Top="510"/>
+            <Label x:Name="Phase1NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="420" Canvas.Top="477"/>
+            <Label x:Name="Phase1Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="80" Canvas.Left="525" Canvas.Top="477"/>
+            <Label x:Name="Phase2NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="420" Canvas.Top="510"/>
+            <Label x:Name="Phase2Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="525" Canvas.Top="510"/>
+            <Label x:Name="Phase3NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="85" Canvas.Left="610" Canvas.Top="477"/>
+            <Label x:Name="Phase3Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="74" Canvas.Left="702" Canvas.Top="477"/>
+            <Label x:Name="Phase4NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="610" Canvas.Top="510" RenderTransformOrigin="0.736,0.594"/>
+            <Label x:Name="Phase4Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="702" Canvas.Top="515"/>
+
+            <Label Content=" Inclusions [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="34" Width="142" Canvas.Left="440" Canvas.Top="576"/>
+            <TextBox x:Name="NumOfInclusionsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="20"
+                    Canvas.Left="629" Canvas.Top="576"/>
         </Canvas>
 
         <Canvas>
-            <Label Content="Number of grains:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Grid.Column="1" Height="40" Width="165" Canvas.Left="400" Canvas.Top="97"/>
-            <TextBox x:Name="NumOfGrainsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100" Grid.Column="1" Canvas.Left="610" Canvas.Top="99"/>
+            <Label Content="Number of grains:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Grid.Column="1" Height="40" Width="165" Canvas.Left="430" Canvas.Top="66"/>
+            <TextBox x:Name="NumOfGrainsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100" Grid.Column="1" Canvas.Left="630" Canvas.Top="66"/>
+            <Label Content="Size of pellet:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="165" Canvas.Left="430" Canvas.Top="106"/>
+            <TextBox x:Name="SizeOfPelletTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="150" Canvas.Left="630" Canvas.Top="112"/>
 
-            <Grid Grid.ColumnSpan="3" Height="300" Width="300" Canvas.Left="430" Canvas.Top="165">
+            <Grid Grid.ColumnSpan="3" Height="304" Width="304" Canvas.Left="446" Canvas.Top="165">
                 <Canvas VerticalAlignment="Top">
                     <Canvas.OpacityMask>
                         <VisualBrush Visual="{Binding ElementName=Mask}" />
                     </Canvas.OpacityMask>
-                    <Image x:Name="PelletImage" Cursor="Pen" Height="300" Width="300" MaxWidth="300" MaxHeight="300" Canvas.Left="2" Panel.ZIndex="9"/>
-                    <Border x:Name="Mask" Width="300" Height="300" Background="White" CornerRadius="150" MaxWidth="300" MaxHeight="300" Canvas.Left="2"/>
+                    <Image x:Name="PelletImage" Height="303" Width="303" Panel.ZIndex="9"/>
+                    <Border x:Name="Mask" Width="303" Height="303" Background="White" CornerRadius="153"/>
                 </Canvas>
             </Grid>
 
             <Button Content="Generate" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Play_Button_Click" Grid.Column="1"
-                    Canvas.Left="430" Canvas.Top="575"/>
+                    Canvas.Left="446" Canvas.Top="639"/>
             <Button x:Name="StopButton" Content="Stop" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Stop_Button_Click"
-                Canvas.Left="590" Canvas.Top="575"/>
+                Canvas.Left="610" Canvas.Top="639"/>
             <Button x:Name="ResumeButton" Visibility="Hidden" Content="Resume" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Resume_Button_Click"
-                Canvas.Left="590" Canvas.Top="575"/>
+                Canvas.Left="610" Canvas.Top="639"/>
             <Button x:Name="StopTemperatureButton" Content="Stop temperature" HorizontalAlignment="Center" VerticalAlignment="Top" Width="165" Height="26" FontSize="16"
-                Canvas.Left="500" Canvas.Top="632" Click="Stop_Temp_Button_Click"/>
+                Canvas.Left="524" Canvas.Top="697" Click="Stop_Temp_Button_Click"/>
             <Button x:Name="StartTemperatureButton" Visibility="Hidden" Content="Start temperature" HorizontalAlignment="Center" VerticalAlignment="Top" Width="165" Height="26" FontSize="16"
-                Canvas.Left="500" Canvas.Top="632" Click="Start_Temp_Button_Click"/>
+                Canvas.Left="524" Canvas.Top="697" Click="Start_Temp_Button_Click"/>
         </Canvas>
     </Grid>
 </Window>

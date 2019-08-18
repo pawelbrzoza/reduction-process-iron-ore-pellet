@@ -4,6 +4,7 @@ using System.Linq;
 using grain_growth.Helpers;
 using grain_growth.Models;
 using FastBitmapLib;
+using System.Drawing;
 
 namespace grain_growth.Alghorithms
 {
@@ -13,6 +14,10 @@ namespace grain_growth.Alghorithms
 
         private List<Grain> Neighbourhood;
 
+        private bool IsGrainUpdate;
+
+        private IOrderedEnumerable<IGrouping<int, Grain>> MostOfCells;
+
         public Range Grow(Range prevRange, Models.Properties properties)
         {
             var currRange = new Range(prevRange.Width, prevRange.Height, true);
@@ -20,7 +25,7 @@ namespace grain_growth.Alghorithms
             InitStructure.GrainsArrayInit(currRange);
             InitStructure.UpdateInsideCircle(currRange);
 
-            foreach (var p in InitStructure.PointsInside)
+            foreach (var p in InitStructure.PointsArea)
             {
                 if (prevRange.GrainsArray[p.X, p.Y].Id != (int)SpecialId.Id.Empty)
                 {
@@ -56,64 +61,64 @@ namespace grain_growth.Alghorithms
                     {
                         // MOORE 2
 
-                        var isGrainUpdate = false;
+                        IsGrainUpdate = false;
 
                         // rule 1 - ordinary moore
                         Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                        var most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                        MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                 .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
-                        if (most.Any())
+                        if (MostOfCells.Any())
                         {
-                            if (most.First().Count() >= 5 && most.First().Count() <= 8)
+                            if (MostOfCells.First().Count() >= 5 && MostOfCells.First().Count() <= 8)
                             {
-                                currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
+                                currRange.GrainsArray[p.X, p.Y] = MostOfCells.Select(g => g.First()).First();
                             }
                             else
                             {
                                 // rule 2 - nearest moore
                                 Neighbourhood = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                     .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
-                                if (most.Any())
+                                if (MostOfCells.Any())
                                 {
-                                    if (most.First().Count() == 3)
+                                    if (MostOfCells.First().Count() == 3)
                                     {
-                                        currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
-                                        isGrainUpdate = true;
+                                        currRange.GrainsArray[p.X, p.Y] = MostOfCells.Select(g => g.First()).First();
+                                        IsGrainUpdate = true;
                                     }
                                 }
-                                if (!isGrainUpdate)
+                                if (!IsGrainUpdate)
                                 {
                                     // rule 3 - further moore
                                     Neighbourhood = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                    most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                    MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                         .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
-                                    if (most.Any())
+                                    if (MostOfCells.Any())
                                     {
-                                        if (most.First().Count() == 3)
+                                        if (MostOfCells.First().Count() == 3)
                                         {
-                                            currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
-                                            isGrainUpdate = true;
+                                            currRange.GrainsArray[p.X, p.Y] = MostOfCells.Select(g => g.First()).First();
+                                            IsGrainUpdate = true;
                                         }
                                     }
-                                    if (!isGrainUpdate)
+                                    if (!IsGrainUpdate)
                                     {
                                         // rule 4 - ordinary moore with probability
                                         Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                        most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                        MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                             .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
-                                        if (most.Any() && (Random.Next(0, 100) <= properties.CurrGrowthProbability))
+                                        if (MostOfCells.Any() && Random.Next(0, 100) <= properties.CurrGrowthProbability)
                                         {
-                                            currRange.GrainsArray[p.X, p.Y] = most.Select(g => g.First()).First();
-                                            isGrainUpdate = true;
+                                            currRange.GrainsArray[p.X, p.Y] = MostOfCells.Select(g => g.First()).First();
+                                            IsGrainUpdate = true;
                                         }
                                     }
                                 }
@@ -167,7 +172,7 @@ namespace grain_growth.Alghorithms
             };
         }
 
-        public static void UpdateBitmap(Range range)
+        public static void UpdateBitmap(Phase phase, Bitmap mainBitmap)
         {
             //Stopwatch sw = Stopwatch.StartNew();
             //for (int i = 0; i < range.Width; i++)
@@ -176,13 +181,28 @@ namespace grain_growth.Alghorithms
             //Console.WriteLine("Serial: {0:f2} s", sw.Elapsed.TotalSeconds);
 
             //Stopwatch sw = Stopwatch.StartNew();
-            using (var fastBitmap = range.StructureBitmap.FastLock())
+            using (FastBitmap fastBitmap = mainBitmap.FastLock())
             {
-                for (int i = 0; i < range.Width; i++)
-                    for (int j = 0; j < range.Height; j++)
-                        fastBitmap.SetPixel(i, j, range.GrainsArray[i, j].Color);
+                for (int i = 1; i < mainBitmap.Width - 1; ++i)
+                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                        if (!SpecialId.IsSpecialId(phase.Range.GrainsArray[i, j].Id))
+                        {
+                            fastBitmap.SetPixel(i, j, phase.Range.GrainsArray[i, j].Color);
+                            ++phase.Counter;
+                        }
             }
             //Console.WriteLine("Serial: {0:f2} s", sw.Elapsed.TotalSeconds);
+        }
+
+        public static void InstantFillColor(Phase phase, int id, Color color)
+        {
+            for (int i = 1; i < phase.Range.Width - 1; ++i)
+                for (int j = 1; j < phase.Range.Height - 1; ++j)
+                    if (phase.Range.GrainsArray[i, j].Id == (int)SpecialId.Id.Empty)
+                    {
+                        phase.Range.GrainsArray[i, j].Id = id;
+                        phase.Range.GrainsArray[i, j].Color = color;
+                    }
         }
     }
 }
