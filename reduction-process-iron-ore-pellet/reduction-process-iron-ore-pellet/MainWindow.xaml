@@ -44,20 +44,20 @@
                 <RadioButton x:Name="RegularBoundaryRadioButton" Margin="2,2,2.2,2" IsChecked="False" Content="Regular boundary" Foreground="White"/>
                 <RadioButton x:Name="RandomInsideRadioButton" Margin="2,2,2.2,2" IsChecked="False" Content="Random inside" Foreground="White"/>
             </StackPanel>
-            <Label Content="Type of growth:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="174" Canvas.Left="19" Canvas.Top="135"/>
+            <Label Content="Growth type:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="174" Canvas.Left="19" Canvas.Top="135"/>
             <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Grid.ColumnSpan="3" Canvas.Left="250" Canvas.Top="135">
                 <RadioButton x:Name="NeumannRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Von Neumann" Foreground="White" />
                 <RadioButton x:Name="MooreRadioButton" Margin="2,2,2.2,2" IsChecked="False" Content="Moore" Foreground="White"/>
                 <RadioButton x:Name="ExtendedMooreRadioButton" Margin="2,2,2.2,2" IsChecked="True" Content="Moore 2" Foreground="White"/>
             </StackPanel>
-            <Label Content="Type of growth phases:&#xD;&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="55" Width="216" Canvas.Left="19" Canvas.Top="206"/>
+            <Label Content="Specyfic growth type:&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="55" Width="216" Canvas.Left="19" Canvas.Top="206"/>
             <StackPanel HorizontalAlignment="Left" Height="60" VerticalAlignment="Top" Width="150" Canvas.Left="250" Canvas.Top="206">
                 <RadioButton x:Name="ConstantGrowthRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Constant" Foreground="White" Checked="ConstantGrowthRadioButton_Checked"/>
                 <RadioButton x:Name="ProgresiveGrowthRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Progresive" Foreground="White" Checked="ProgresiveGrowthRadioButton_Checked" />
                 <RadioButton x:Name="PhasesGrowthRadioButton" Margin="2,2,2.4,2" IsChecked="False" Content="Specific to phase" Foreground="White" Checked="PhasesGrowthRadioButton_Checked" />
             </StackPanel>
             <Label Content="Constant probability [%]:&#xA;(Moore 2)" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="73" Width="236" Canvas.Left="19" Canvas.Top="276"/>
-            <TextBox x:Name="GrowthProbabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
+            <TextBox x:Name="ConstGrowthProbabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                 IsEnabled="False" Canvas.Left="260" Canvas.Top="278"/>
 
             <Label Content="Max temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="174" Canvas.Left="19" Canvas.Top="336"/>
@@ -84,25 +84,25 @@
                     Canvas.Left="294" Canvas.Top="455"/>
 
             <Label Content="Colours:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="308" Canvas.Left="17" Canvas.Top="487"/>
-            <wpfx:ColorPicker x:Name="Fe2O3ColorPicker" SelectedColor="Red" Height="30" Grid.Column="1" Canvas.Left="19" Canvas.Top="525" Width="66" />
-            <wpfx:ColorPicker x:Name="Fe3O4ColorPicker" SelectedColor="Yellow" Height="30" Canvas.Left="114" Canvas.Top="525" Width="66" />
-            <wpfx:ColorPicker x:Name="FeOColorPicker" SelectedColor="Green" Height="30" Canvas.Left="205" Canvas.Top="525" Width="66" />
-            <wpfx:ColorPicker x:Name="FeColorPicker" SelectedColor="Blue" Height="30" Canvas.Left="294" Canvas.Top="525" Width="66" />
+            <wpfx:ColorPicker x:Name="Phase1ColorPicker" SelectedColor="Red" Height="30" Grid.Column="1" Canvas.Left="19" Canvas.Top="525" Width="66" />
+            <wpfx:ColorPicker x:Name="Phase2ColorPicker" SelectedColor="Yellow" Height="30" Canvas.Left="114" Canvas.Top="525" Width="66" />
+            <wpfx:ColorPicker x:Name="Phase3ColorPicker" SelectedColor="Green" Height="30" Canvas.Left="205" Canvas.Top="525" Width="66" />
+            <wpfx:ColorPicker x:Name="Phase4ColorPicker" SelectedColor="Blue" Height="30" Canvas.Left="294" Canvas.Top="525" Width="66" />
 
             <Label Content="Growth probabilities [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="332" Canvas.Left="19" Canvas.Top="560"/>
-            <TextBox x:Name="Fe2O3PropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
+            <TextBox x:Name="Phase1PropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                 IsEnabled="False" Canvas.Left="19" Canvas.Top="598"/>
-            <TextBox x:Name="Fe3O4PropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
+            <TextBox x:Name="Phase2PropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                 IsEnabled="False" Canvas.Left="114" Canvas.Top="598"/>
-            <TextBox x:Name="FeOPropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
+            <TextBox x:Name="Phase3PropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                 IsEnabled="False" Canvas.Left="205" Canvas.Top="598"/>
-            <TextBox x:Name="FePropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
+            <TextBox x:Name="Phase4PropabilityTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                 IsEnabled="False" Canvas.Left="294" Canvas.Top="598"/>
 
             <Label Content="Current temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="196" Canvas.Left="19" Canvas.Top="693"/>
             <Label x:Name="temperatureLabel" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="66" Canvas.Left="294" Canvas.Top="693" RenderTransformOrigin="0.592,0.6"/>
-            <Label Content="Rise of temperature [ms]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="226" Canvas.Left="19" Canvas.Top="647"/>
-            <TextBox x:Name="RiseOfTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100"
+            <Label Content="Temperature rise rate [ms]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="240" Canvas.Left="19" Canvas.Top="647"/>
+            <TextBox x:Name="TemperatureRiseRateTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100"
                     Canvas.Left="294" Canvas.Top="650"/>
             <Label x:Name="Phase1NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="105" Canvas.Left="420" Canvas.Top="477"/>
             <Label x:Name="Phase1Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="80" Canvas.Left="525" Canvas.Top="477"/>
@@ -110,19 +110,19 @@
             <Label x:Name="Phase2Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="525" Canvas.Top="510"/>
             <Label x:Name="Phase3NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="85" Canvas.Left="610" Canvas.Top="477"/>
             <Label x:Name="Phase3Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="74" Canvas.Left="702" Canvas.Top="477"/>
-            <Label x:Name="Phase4NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="610" Canvas.Top="510" RenderTransformOrigin="0.736,0.594"/>
+            <Label x:Name="Phase4NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="70" Canvas.Left="625" Canvas.Top="510" RenderTransformOrigin="0.736,0.594"/>
             <Label x:Name="Phase4Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="702" Canvas.Top="515"/>
 
             <Label Content=" Inclusions [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="34" Width="142" Canvas.Left="440" Canvas.Top="576"/>
-            <TextBox x:Name="NumOfInclusionsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="20"
+            <TextBox x:Name="AmountOfInclusionsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="20"
                     Canvas.Left="629" Canvas.Top="576"/>
         </Canvas>
 
         <Canvas>
-            <Label Content="Number of grains:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Grid.Column="1" Height="40" Width="165" Canvas.Left="430" Canvas.Top="66"/>
-            <TextBox x:Name="NumOfGrainsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100" Grid.Column="1" Canvas.Left="630" Canvas.Top="66"/>
-            <Label Content="Size of pellet:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="165" Canvas.Left="430" Canvas.Top="106"/>
-            <TextBox x:Name="SizeOfPelletTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="150" Canvas.Left="630" Canvas.Top="112"/>
+            <Label Content="Amount of grains:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Grid.Column="1" Height="40" Width="165" Canvas.Left="430" Canvas.Top="66"/>
+            <TextBox x:Name="AmountOfGrainsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100" Grid.Column="1" Canvas.Left="630" Canvas.Top="66"/>
+            <Label Content="Pellet size [px]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="40" Width="165" Canvas.Left="430" Canvas.Top="106"/>
+            <TextBox x:Name="PelletSizeTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="150" Canvas.Left="630" Canvas.Top="112"/>
 
             <Grid Grid.ColumnSpan="3" Height="304" Width="304" Canvas.Left="446" Canvas.Top="165">
                 <Canvas VerticalAlignment="Top">

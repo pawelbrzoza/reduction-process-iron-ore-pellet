@@ -185,10 +185,12 @@ namespace grain_growth.Alghorithms
             {
                 for (int i = 1; i < mainBitmap.Width - 1; ++i)
                     for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                        if (!SpecialId.IsSpecialId(phase.Range.GrainsArray[i, j].Id))
+                        if (phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Transparent &&
+                            phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Empty)
                         {
                             fastBitmap.SetPixel(i, j, phase.Range.GrainsArray[i, j].Color);
-                            ++phase.Counter;
+                            if(phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Border)
+                                ++phase.Counter;
                         }
             }
             //Console.WriteLine("Serial: {0:f2} s", sw.Elapsed.TotalSeconds);

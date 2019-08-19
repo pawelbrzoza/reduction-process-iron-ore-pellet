@@ -12,6 +12,10 @@ namespace grain_growth.Models
 
         public int AmountOfGrains { get; set; }
 
+        public int AmountOfInclusions { get; set; }
+
+        public int PelletSize { get; set; }
+
         public int CurrGrowthProbability { get; set; }
 
         public int ConstGrowthProbability { get; set; }
@@ -20,7 +24,7 @@ namespace grain_growth.Models
 
         public int CurrTemperature { get; set; }
 
-        public int RiseOfTemperature { get; set; }
+        public int TemperatureRiseRate { get; set; }
 
         public int BufferTemperature { get; set; }
 

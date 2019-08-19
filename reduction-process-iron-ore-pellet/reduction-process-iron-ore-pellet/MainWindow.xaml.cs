@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
 using System.Text;
+using System.Drawing.Imaging;
 
 namespace grain_growth
 {
@@ -41,10 +42,10 @@ namespace grain_growth
             if (mainThread == null) mainThread = new SynchronizationContext();
 
             ConstantGrowthRadioButton.IsChecked = true;
-            Phase1NameLabel.Content = Phase1NameTextBox.Text;
-            Phase2NameLabel.Content = Phase2NameTextBox.Text;
-            Phase3NameLabel.Content = Phase3NameTextBox.Text;
-            Phase4NameLabel.Content = Phase4NameTextBox.Text;
+            Phase1NameLabel.Content = Phase1NameTextBox.Text + " [%]";
+            Phase2NameLabel.Content = Phase2NameTextBox.Text + " [%]";
+            Phase3NameLabel.Content = Phase3NameTextBox.Text + " [%]";
+            Phase4NameLabel.Content = Phase4NameTextBox.Text + " [%]";
         }
 
         private void SetProperties()
@@ -56,22 +57,24 @@ namespace grain_growth
             {
                 RangeWidth = (int)PelletImage.Width,
                 RangeHeight = (int)PelletImage.Height,
-                AmountOfGrains = int.Parse(NumOfGrainsTextBox.Text),
+                AmountOfGrains = int.Parse(AmountOfGrainsTextBox.Text),
+                AmountOfInclusions = int.Parse(AmountOfInclusionsTextBox.Text),
+                PelletSize = int.Parse(PelletSizeTextBox.Text),
                 NeighbourhoodType = ChooseNeighbourhoodType(),
                 StartingPointsType = ChooseStartingPointsType(),
-                CurrGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
-                ConstGrowthProbability = int.Parse(GrowthProbabilityTextBox.Text),
+                CurrGrowthProbability = int.Parse(ConstGrowthProbabilityTextBox.Text),
+                ConstGrowthProbability = int.Parse(ConstGrowthProbabilityTextBox.Text),
                 CurrTemperature = 0,
-                RiseOfTemperature = int.Parse(RiseOfTemperatureTextBox.Text),
+                TemperatureRiseRate = int.Parse(TemperatureRiseRateTextBox.Text),
                 MaxTemperature = int.Parse(MaxTemperatureTextBox.Text),
                 BufferTemperature = 0
             };
 
             // update constants
-            Constants.UpdateConstants(double.Parse(SizeOfPelletTextBox.Text));
+            Constants.UpdateConstants(properties.PelletSize);
 
             // init inclusion points inside update area
-            InitInclusions.InitPoints(double.Parse(NumOfInclusionsTextBox.Text));
+            InitInclusions.InitPoints(properties.AmountOfInclusions);
 
             // init inclusion points inside update area
             InitStructure.PointsArea = InitStructure.GetPointsInsideCircle((int)Constants.RADIOUS, Constants.MIDDLE_POINT);
@@ -82,10 +85,10 @@ namespace grain_growth
             phases[2].Name = Phase3NameTextBox.Text;
             phases[3].Name = Phase4NameTextBox.Text;
 
-            Phase1NameLabel.Content = Phase1NameTextBox.Text;
-            Phase2NameLabel.Content = Phase2NameTextBox.Text;
-            Phase3NameLabel.Content = Phase3NameTextBox.Text;
-            Phase4NameLabel.Content = Phase4NameTextBox.Text;
+            Phase1NameLabel.Content = Phase1NameTextBox.Text + " [%]";
+            Phase2NameLabel.Content = Phase2NameTextBox.Text + " [%]";
+            Phase3NameLabel.Content = Phase3NameTextBox.Text + " [%]";
+            Phase4NameLabel.Content = Phase4NameTextBox.Text + " [%]";
 
             for (int i = 0; i < Constants.NUMBER_OF_PHASES; i++)
             {
@@ -103,22 +106,22 @@ namespace grain_growth
             phases[2].TemperaturePoint = int.Parse(Phase3TextBox.Text);
             phases[3].TemperaturePoint = int.Parse(Phase4TextBox.Text);
 
-            phases[0].Color = Converters.WindowsToDrawingColor(Fe2O3ColorPicker.SelectedColor.Value);
-            phases[1].Color = Converters.WindowsToDrawingColor(Fe3O4ColorPicker.SelectedColor.Value);
-            phases[2].Color = Converters.WindowsToDrawingColor(FeOColorPicker.SelectedColor.Value);
-            phases[3].Color = Converters.WindowsToDrawingColor(FeColorPicker.SelectedColor.Value);
+            phases[0].Color = Converters.WindowsToDrawingColor(Phase1ColorPicker.SelectedColor.Value);
+            phases[1].Color = Converters.WindowsToDrawingColor(Phase2ColorPicker.SelectedColor.Value);
+            phases[2].Color = Converters.WindowsToDrawingColor(Phase3ColorPicker.SelectedColor.Value);
+            phases[3].Color = Converters.WindowsToDrawingColor(Phase4ColorPicker.SelectedColor.Value);
 
-            phases[0].GrowthProbability = Int32.Parse(Fe2O3PropabilityTextBox.Text);
-            phases[1].GrowthProbability = Int32.Parse(Fe3O4PropabilityTextBox.Text);
-            phases[2].GrowthProbability = Int32.Parse(FeOPropabilityTextBox.Text);
-            phases[3].GrowthProbability = Int32.Parse(FePropabilityTextBox.Text);
+            phases[0].GrowthProbability = Int32.Parse(Phase1PropabilityTextBox.Text);
+            phases[1].GrowthProbability = Int32.Parse(Phase2PropabilityTextBox.Text);
+            phases[2].GrowthProbability = Int32.Parse(Phase3PropabilityTextBox.Text);
+            phases[3].GrowthProbability = Int32.Parse(Phase4PropabilityTextBox.Text);
 
             // phase 1 - initialization
             phases[0].Started = true;
             CellularAutomata.InstantFillColor(phases[0], 1, phases[0].Color);
 
             // set temperature dispatcher
-            tempteratureDispatcher.Interval = new TimeSpan(0, 0, 0, 0, int.Parse(RiseOfTemperatureTextBox.Text));
+            tempteratureDispatcher.Interval = new TimeSpan(0, 0, 0, 0, int.Parse(TemperatureRiseRateTextBox.Text));
 
             // csv  file
             csv = new StringBuilder();
@@ -131,24 +134,32 @@ namespace grain_growth
             CollectData();
             if (properties.CurrTemperature < properties.MaxTemperature)
             {
-                properties.CurrTemperature = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature)
+                properties.CurrTemperature = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.TemperatureRiseRate)
                     - properties.BufferTemperature;
                 temperatureLabel.Content = Convert.ToString(properties.CurrTemperature);
             }
             else if (properties.CurrTemperature >= properties.MaxTemperature && mainDispatcher.IsEnabled)
             {
-                Console.WriteLine("Serial: {0:f2} s", stopWatch.Elapsed.TotalSeconds);
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Mouse.OverrideCursor = null;
-                });
-
-                var newLine = string.Format("Total time:;{0:f2};s\nInclusion:;{1};%", stopWatch.Elapsed.TotalSeconds, double.Parse(NumOfInclusionsTextBox.Text));
+                var newLine = string.Format("Total time:;{0:f2};s\nInclusion:;{1};%", stopWatch.Elapsed.TotalSeconds, properties.AmountOfInclusions);
+                csv.AppendLine(newLine);
+                newLine = string.Format("Amount of grains:;{0}", properties.AmountOfGrains);
+                csv.AppendLine(newLine);
+                newLine = string.Format("Pellet size:;{0};px", properties.PelletSize);
+                csv.AppendLine(newLine);
+                newLine = string.Format("Propability:;{0}/{1}/{2};%", phases[1].GrowthProbability, phases[1].GrowthProbability, phases[2].GrowthProbability);
+                csv.AppendLine(newLine);
+                newLine = string.Format("Growth type:;{0}", properties.NeighbourhoodType.ToString());
                 csv.AppendLine(newLine);
 
                 var file = string.Format("{0}{1}{2}", "../../data/results_", DateTime.Now.ToString("yyyyMMdd_hhmm_tt"), ".csv");
                 File.WriteAllText(file, csv.ToString());
 
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Mouse.OverrideCursor = null;
+                });
+
+                Console.WriteLine("Serial: {0:f2} s", stopWatch.Elapsed.TotalSeconds);
                 mainDispatcher.Stop();
                 tempteratureDispatcher.Stop();
             }
@@ -221,10 +232,10 @@ namespace grain_growth
                  - phases[1].Percentage - phases[2].Percentage - phases[3].Percentage;
             phases[0].Percentage = Math.Round(phases[0].Percentage, 2);
 
-            Phase1Label.Content = phases[0].Percentage > 0 ? phases[0].Percentage : 0;
-            Phase2Label.Content = phases[1].Percentage > 0 ? phases[1].Percentage : 0;
-            Phase3Label.Content = phases[2].Percentage > 0 ? phases[2].Percentage : 0;
-            Phase4Label.Content = phases[3].Percentage > 0 ? phases[3].Percentage : 0;
+            Phase1Label.Content = phases[0].Percentage /*> 0 ? phases[0].Percentage : 0*/;
+            Phase2Label.Content = phases[1].Percentage /*> 0 ? phases[1].Percentage : 0*/;
+            Phase3Label.Content = phases[2].Percentage /*> 0 ? phases[2].Percentage : 0*/;
+            Phase4Label.Content = phases[3].Percentage /*> 0 ? phases[3].Percentage : 0*/;
         }
 
         private void CollectData()
@@ -233,23 +244,23 @@ namespace grain_growth
             //Console.WriteLine("Temp.: " + properties.CurrTemperature + ", Fe2O3 [%]: " + phases[0].Percentage + ", Fe3O4 [%]: " + phases[1].Percentage
             //                    + ", FeO [%]: " + phases[2].Percentage + ", Fe [%]: " + phases[3].Percentage);
             var temperature = properties.CurrTemperature.ToString();
-            var phase0 = phases[0].Percentage.ToString();
-            var phase1 = phases[1].Percentage.ToString();
-            var phase2 = phases[2].Percentage.ToString();
-            var phase3 = phases[3].Percentage.ToString();
+            var phase0 = phases[0].Percentage > 0 ? phases[0].Percentage.ToString() : "0";
+            var phase1 = phases[1].Percentage > 0 ? phases[1].Percentage.ToString() : "0";
+            var phase2 = phases[2].Percentage > 0 ? phases[2].Percentage.ToString() : "0";
+            var phase3 = phases[3].Percentage > 0 ? phases[3].Percentage.ToString() : "0";
             var newLine = string.Format("{0};{1};{2};{3};{4}", temperature, phase0, phase1, phase2, phase3);
             csv.AppendLine(newLine);
         }
 
         private async void BufferTempteraturLoading()
         {
-            int temp_time = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature);
+            int temp_time = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.TemperatureRiseRate);
             await Task.Factory.StartNew(() =>
             {
                 while (!tempteratureDispatcher.IsEnabled) { }
 
                 mainThread.Send((object state) => {
-                    properties.BufferTemperature += ((int)stopWatch.Elapsed.TotalMilliseconds / properties.RiseOfTemperature) - temp_time;
+                    properties.BufferTemperature += ((int)stopWatch.Elapsed.TotalMilliseconds / properties.TemperatureRiseRate) - temp_time;
                 }, null);
             });
         }
@@ -308,29 +319,29 @@ namespace grain_growth
 
         private void ConstantGrowthRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            GrowthProbabilityTextBox.IsEnabled = true;
-            Fe2O3PropabilityTextBox.IsEnabled = false;
-            Fe3O4PropabilityTextBox.IsEnabled = false;
-            FeOPropabilityTextBox.IsEnabled = false;
-            FePropabilityTextBox.IsEnabled = false;
+            ConstGrowthProbabilityTextBox.IsEnabled = true;
+            Phase1PropabilityTextBox.IsEnabled = false;
+            Phase2PropabilityTextBox.IsEnabled = false;
+            Phase3PropabilityTextBox.IsEnabled = false;
+            Phase4PropabilityTextBox.IsEnabled = false;
         }
 
         private void PhasesGrowthRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            GrowthProbabilityTextBox.IsEnabled = false;
-            Fe2O3PropabilityTextBox.IsEnabled = true;
-            Fe3O4PropabilityTextBox.IsEnabled = true;
-            FeOPropabilityTextBox.IsEnabled = true;
-            FePropabilityTextBox.IsEnabled = true;
+            ConstGrowthProbabilityTextBox.IsEnabled = false;
+            Phase1PropabilityTextBox.IsEnabled = true;
+            Phase2PropabilityTextBox.IsEnabled = true;
+            Phase3PropabilityTextBox.IsEnabled = true;
+            Phase4PropabilityTextBox.IsEnabled = true;
         }
 
         private void ProgresiveGrowthRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            GrowthProbabilityTextBox.IsEnabled = false;
-            Fe2O3PropabilityTextBox.IsEnabled = false;
-            Fe3O4PropabilityTextBox.IsEnabled = false;
-            FeOPropabilityTextBox.IsEnabled = false;
-            FePropabilityTextBox.IsEnabled = false;
+            ConstGrowthProbabilityTextBox.IsEnabled = false;
+            Phase1PropabilityTextBox.IsEnabled = false;
+            Phase2PropabilityTextBox.IsEnabled = false;
+            Phase3PropabilityTextBox.IsEnabled = false;
+            Phase4PropabilityTextBox.IsEnabled = false;
         }
 
         private void ImportBitmap_Click(object sender, RoutedEventArgs e)
@@ -383,20 +394,17 @@ namespace grain_growth
 
         private void ExportBitmap_Click(object sender, RoutedEventArgs e)
         {
+            mainBitmap.MakeTransparent(Color.HotPink);
+
             SaveFileDialog save = new SaveFileDialog
             {
-                Filter = "Bitmap Image|*.bmp",
-                Title = "Save an Image File"
+                Filter = "Bitmap Image|*.png",
+                Title = "Save an Image File",
+                FileName = string.Format("bitmap_{0}", DateTime.Now.ToString("yyyyMMdd_hhmm_tt"))
             };
             if (save.ShowDialog() == true)
             {
-                var image = PelletImage.Source;
-                using (var fileStream = new FileStream(save.InitialDirectory + save.FileName, FileMode.Create))
-                {
-                    BitmapEncoder encoder = new PngBitmapEncoder();
-                    encoder.Frames.Add(BitmapFrame.Create(image as BitmapImage));
-                    encoder.Save(fileStream);
-                }
+                mainBitmap.Save(save.FileName, ImageFormat.Png);
             }
         }
 

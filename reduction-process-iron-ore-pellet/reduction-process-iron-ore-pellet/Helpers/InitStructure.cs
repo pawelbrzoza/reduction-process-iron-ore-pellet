@@ -23,6 +23,7 @@ namespace grain_growth.Helpers
             // init grains array by white color (empty grains)
             UpdateInsideCircle(tempRange);
 
+            // init black circle border
             DrawBlackCircleBorder(tempRange);
 
             Point coordinates = RandomCoordinates.Get(tempRange.Width, tempRange.Height);
@@ -52,9 +53,9 @@ namespace grain_growth.Helpers
                 // set random starting coordinates [x,y] and color for grains on circle boundary (equal sections*)
                 for (int grainNumber = 1; grainNumber <= properties.AmountOfGrains; grainNumber++)
                 {
-                    double angle = grainNumber * (360 / properties.AmountOfGrains);
-                    coordinates.X = (int)(Constants.MIDDLE_POINT.X + Constants.RADIOUS * Math.Cos(angle));
-                    coordinates.Y = (int)(Constants.MIDDLE_POINT.Y + Constants.RADIOUS * Math.Sin(angle));
+                    double angle = (double)grainNumber * (360.0 / (double)properties.AmountOfGrains);
+                    coordinates.X = (int)(Constants.MIDDLE_POINT.X + (Constants.RADIOUS-2) * Math.Cos(angle * Math.PI / 180.0));
+                    coordinates.Y = (int)(Constants.MIDDLE_POINT.Y + (Constants.RADIOUS-2) * Math.Sin(angle * Math.PI / 180.0));
 
                     AllGrainsTypes[grainNumber - 1] = new Grain()
                     {
@@ -101,7 +102,7 @@ namespace grain_growth.Helpers
                         tempRange.GrainsArray[i, j] = new Grain()
                         {
                             Id = (int)SpecialId.Id.Transparent,
-                            Color = Color.Black,
+                            Color = Color.HotPink,
                         };
         }
 
@@ -134,27 +135,6 @@ namespace grain_growth.Helpers
             return pointsInside;
         }
 
-        public static unsafe void SetPixel(Range tempRange, int x, int y)
-        {
-            if ((x >= 0) && (y >= 0) && (x < tempRange.Width) && (y < tempRange.Height))
-            {
-                tempRange.GrainsArray[x, y].Id = (int)SpecialId.Id.Border;
-                tempRange.GrainsArray[x, y].Color = Color.Black;
-            }
-        }
-
-        private static void CirclePoints(Range tempRange, int x, int y, int x0, int y0)
-        {
-            SetPixel(tempRange, x + x0, y + y0);
-            SetPixel(tempRange, y + x0, x + y0);
-            SetPixel(tempRange, y + x0, -x + y0);
-            SetPixel(tempRange, x + x0, -y + y0);
-            SetPixel(tempRange, -y + x0, -x + y0);
-            SetPixel(tempRange, -x + x0, -y + y0);
-            SetPixel(tempRange, -y + x0, x + y0);
-            SetPixel(tempRange, -x + x0, y + y0);
-        }
-
         public static void DrawBlackCircleBorder(Range tempRange)
         {
             int x, y, x0, y0, d, radius = (int)Constants.RADIOUS;
@@ -179,6 +159,27 @@ namespace grain_growth.Helpers
                 }
                 CirclePoints(tempRange, x, y, x0, y0);
             }
+        }
+
+        private static void SetPixel(Range tempRange, int x, int y)
+        {
+            if ((x >= 0) && (y >= 0) && (x < tempRange.Width) && (y < tempRange.Height))
+            {
+                tempRange.GrainsArray[x, y].Id = (int)SpecialId.Id.Border;
+                tempRange.GrainsArray[x, y].Color = Color.Black;
+            }
+        }
+
+        private static void CirclePoints(Range tempRange, int x, int y, int x0, int y0)
+        {
+            SetPixel(tempRange, x + x0, y + y0);
+            SetPixel(tempRange, y + x0, x + y0);
+            SetPixel(tempRange, y + x0, -x + y0);
+            SetPixel(tempRange, x + x0, -y + y0);
+            SetPixel(tempRange, -y + x0, -x + y0);
+            SetPixel(tempRange, -x + x0, -y + y0);
+            SetPixel(tempRange, -y + x0, x + y0);
+            SetPixel(tempRange, -x + x0, y + y0);
         }
     }
 }

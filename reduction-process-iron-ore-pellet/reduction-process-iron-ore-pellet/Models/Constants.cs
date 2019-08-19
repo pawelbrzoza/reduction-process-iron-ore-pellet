@@ -15,7 +15,7 @@ namespace grain_growth.Models
         {
             RADIOUS = r;
             DIAMETER = RADIOUS * 2;
-            CIRCLE_AREA = Math.PI * Math.Pow(RADIOUS-1, 2);
+            CIRCLE_AREA = Math.PI * Math.Pow(RADIOUS-0.43, 2);
         }
     }
 }
