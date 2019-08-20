@@ -1,4 +1,4 @@
-﻿using grain_growth.Alghorithms;
+﻿using grain_growth.Algorithms;
 using grain_growth.Models;
 using grain_growth.Helpers;
 
@@ -21,14 +21,14 @@ namespace grain_growth
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    /// 
+    ///
 
     public partial class MainWindow : Window
     {
         private Models.Properties properties;
         private readonly Phase[] phases = InitializeArray.Init<Phase>(Constants.NUMBER_OF_PHASES);
         private readonly DispatcherTimer mainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 0) };
-        private readonly DispatcherTimer tempteratureDispatcher = new DispatcherTimer();
+        private readonly DispatcherTimer temperatureDispatcher = new DispatcherTimer();
         private Bitmap mainBitmap;
         private readonly SynchronizationContext mainThread = SynchronizationContext.Current;
         private Stopwatch stopWatch;
@@ -38,7 +38,7 @@ namespace grain_growth
         {
             InitializeComponent();
             mainDispatcher.Tick += PhasesDispatcherTick;
-            tempteratureDispatcher.Tick += TemperaturDispatcherTick;
+            temperatureDispatcher.Tick += TemperaturDispatcherTick;
             if (mainThread == null) mainThread = new SynchronizationContext();
 
             ConstantGrowthRadioButton.IsChecked = true;
@@ -90,6 +90,8 @@ namespace grain_growth
             Phase3NameLabel.Content = Phase3NameTextBox.Text + " [%]";
             Phase4NameLabel.Content = Phase4NameTextBox.Text + " [%]";
 
+
+
             for (int i = 0; i < Constants.NUMBER_OF_PHASES; i++)
             {
                 phases[i].Range = new Range(properties.RangeWidth, properties.RangeWidth);
@@ -111,17 +113,35 @@ namespace grain_growth
             phases[2].Color = Converters.WindowsToDrawingColor(Phase3ColorPicker.SelectedColor.Value);
             phases[3].Color = Converters.WindowsToDrawingColor(Phase4ColorPicker.SelectedColor.Value);
 
-            phases[0].GrowthProbability = Int32.Parse(Phase1PropabilityTextBox.Text);
-            phases[1].GrowthProbability = Int32.Parse(Phase2PropabilityTextBox.Text);
-            phases[2].GrowthProbability = Int32.Parse(Phase3PropabilityTextBox.Text);
-            phases[3].GrowthProbability = Int32.Parse(Phase4PropabilityTextBox.Text);
+            if (PhasesGrowthRadioButton.IsChecked == true)
+            {
+                phases[0].GrowthProbability = Int32.Parse(Phase1PropabilityTextBox.Text);
+                phases[1].GrowthProbability = Int32.Parse(Phase2PropabilityTextBox.Text);
+                phases[2].GrowthProbability = Int32.Parse(Phase3PropabilityTextBox.Text);
+                phases[3].GrowthProbability = Int32.Parse(Phase4PropabilityTextBox.Text);
+            }
+            else if (ProgresiveGrowthRadioButton.IsChecked == true)
+            {
+                phases[0].GrowthProbability = (100 / Constants.NUMBER_OF_PHASES) * (0 + 1);
+                phases[1].GrowthProbability = (100 / Constants.NUMBER_OF_PHASES) * (1 + 1);
+                phases[2].GrowthProbability = (100 / Constants.NUMBER_OF_PHASES) * (2 + 1);
+                phases[3].GrowthProbability = (100 / Constants.NUMBER_OF_PHASES) * (3 + 1);
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                prevrange[i] = InitStructure.InitCellularAutomata(this.properties, phases[i].Color);
+                InitInclusions.AddInclusions(prevRange[i]);
+                properties.CurrGrowthProbability = phases[p].GrowthProbability;
+                ca[i] = new CellularAutomata(ObjectCopier.Clone(properties));
+            }
 
             // phase 1 - initialization
             phases[0].Started = true;
             CellularAutomata.InstantFillColor(phases[0], 1, phases[0].Color);
 
             // set temperature dispatcher
-            tempteratureDispatcher.Interval = new TimeSpan(0, 0, 0, 0, int.Parse(TemperatureRiseRateTextBox.Text));
+            temperatureDispatcher.Interval = new TimeSpan(0, 0, 0, 0, int.Parse(TemperatureRiseRateTextBox.Text));
 
             // csv  file
             csv = new StringBuilder();
@@ -161,58 +181,44 @@ namespace grain_growth
 
                 Console.WriteLine("Serial: {0:f2} s", stopWatch.Elapsed.TotalSeconds);
                 mainDispatcher.Stop();
-                tempteratureDispatcher.Stop();
+                temperatureDispatcher.Stop();
             }
         }
+
+        Task<Range>[] tasks = new Task<Range>[4];
 
         private void PhasesDispatcherTick(object sender, EventArgs e)
         {
             for (int p = 0; p < Constants.NUMBER_OF_PHASES; p++)
             {
-                phases[p].Counter = 0;
-
                 if (properties.CurrTemperature >= phases[p].TemperaturePoint)
                 {
-                    if (!phases[p].Started)
-                    {
-                        PhaseGenerator(ObjectCopier.Clone(properties), p);
-                        phases[p].Started = true;
-                        Console.WriteLine("Start " + phases[p].Name + " phase");
-                    }
+                    tasks[p] = Task.Run(() => PhaseGenerator(p));
+                    phases[p].Started = true;
                 }
+            }
+            Task.WaitAll(tasks);
+            for (int p = 0; p < Constants.NUMBER_OF_PHASES; p++)
+            {
+                phases[p].Range = tasks[p];
+                phases[p].Counter = 0;
                 CellularAutomata.UpdateBitmap(phases[p], mainBitmap);
             }
 
             PelletImage.Source = Converters.BitmapToImageSource(mainBitmap);
             PhasePercentageUpdate();
-            
         }
 
-        private async void PhaseGenerator(Models.Properties properties, int p)
+        Range[] currRange = new Range[4];
+        Range[] prevRange = new Range[4];
+        CellularAutomata[] ca = new CellularAutomata[4];
+
+        private static Range PhaseGenerator(int p)
         {
-            Range currRange;
-            Range prevRange = InitStructure.InitCellularAutomata(this.properties, phases[p].Color);
-            InitInclusions.AddInclusions(prevRange);
-            CellularAutomata ca = new CellularAutomata();
+            currRange[p] = ca[p].Grow(prevRange[p]);
+            prevRange[p] = currRange[p];
 
-            if (PhasesGrowthRadioButton.IsChecked == true)
-                properties.CurrGrowthProbability = phases[p].GrowthProbability;
-            else if (ProgresiveGrowthRadioButton.IsChecked == true)
-                properties.CurrGrowthProbability = (100 / Constants.NUMBER_OF_PHASES) * (p + 1);
-
-            await Task.Factory.StartNew(() =>
-            {
-                while (this.properties.CurrTemperature < this.properties.MaxTemperature)
-                {
-                    currRange = ca.Grow(prevRange, properties);
-                    prevRange = currRange;
-
-                    mainThread.Send((object state) => {
-                        phases[p].Range = currRange;
-                    }, null);
-                }
-            });
-            Console.WriteLine("Stop " + phases[p].Name + " phase");
+            return currRange[p];
         }
 
         private void PhasePercentageUpdate()
@@ -257,7 +263,7 @@ namespace grain_growth
             int temp_time = ((int)stopWatch.Elapsed.TotalMilliseconds / properties.TemperatureRiseRate);
             await Task.Factory.StartNew(() =>
             {
-                while (!tempteratureDispatcher.IsEnabled) { }
+                while (!temperatureDispatcher.IsEnabled) { }
 
                 mainThread.Send((object state) => {
                     properties.BufferTemperature += ((int)stopWatch.Elapsed.TotalMilliseconds / properties.TemperatureRiseRate) - temp_time;
@@ -270,9 +276,9 @@ namespace grain_growth
             Application.Current.Dispatcher.Invoke(() => {
                 Mouse.OverrideCursor = Cursors.Wait;
             });
-            
+
             SetProperties();
-            tempteratureDispatcher.Start();
+            temperatureDispatcher.Start();
             mainDispatcher.Start();
             stopWatch = Stopwatch.StartNew();
         }
@@ -286,7 +292,7 @@ namespace grain_growth
             });
 
             mainDispatcher.Stop();
-            tempteratureDispatcher.Stop();
+            temperatureDispatcher.Stop();
             BufferTempteraturLoading();
         }
 
@@ -299,14 +305,14 @@ namespace grain_growth
             });
 
             mainDispatcher.Start();
-            tempteratureDispatcher.Start();
+            temperatureDispatcher.Start();
         }
 
         private void Stop_Temp_Button_Click(object sender, RoutedEventArgs e)
         {
             StartTemperatureButton.Visibility = Visibility.Visible;
             StopTemperatureButton.Visibility = Visibility.Hidden;
-            tempteratureDispatcher.Stop();
+            temperatureDispatcher.Stop();
             BufferTempteraturLoading();
         }
 
@@ -314,7 +320,7 @@ namespace grain_growth
         {
             StartTemperatureButton.Visibility = Visibility.Hidden;
             StopTemperatureButton.Visibility = Visibility.Visible;
-            tempteratureDispatcher.Start();
+            temperatureDispatcher.Start();
         }
 
         private void ConstantGrowthRadioButton_Checked(object sender, RoutedEventArgs e)

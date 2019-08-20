@@ -6,19 +6,28 @@ using grain_growth.Models;
 using FastBitmapLib;
 using System.Drawing;
 
-namespace grain_growth.Alghorithms
+namespace grain_growth.Algorithms
 {
     public class CellularAutomata
     {
         private readonly Random Random = new Random();
 
-        private List<Grain> Neighbourhood;
+        private List<Grain> Neighborhood;
 
         private bool IsGrainUpdate;
 
         private IOrderedEnumerable<IGrouping<int, Grain>> MostOfCells;
 
-        public Range Grow(Range prevRange, Models.Properties properties)
+        private Properties properties;
+
+        CellularAutomata() { }
+
+        CellularAutomata(Properties properties)
+        {
+            this.properties = properties;
+        }
+
+        public Range Grow(Range prevRange)
         {
             var currRange = new Range(prevRange.Width, prevRange.Height, true);
 
@@ -40,19 +49,19 @@ namespace grain_growth.Alghorithms
                         switch (properties.NeighbourhoodType)
                         {
                             case NeighbourhoodType.Moore:
-                                Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                Neighborhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
                                 break;
                             case NeighbourhoodType.Neumann:
-                                Neighbourhood = TakeNeumannNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                Neighborhood = TakeNeumannNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
                                 break;
                         }
 
-                        var most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                        var most = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                 .GroupBy(g => g.Id);
 
                         if (most.Any())
                         {
-                            // assign grain which are the most in the list of neighborhoods 
+                            // assign grain which are the most in the list of neighborhoods
                             currRange.GrainsArray[p.X, p.Y] = most.OrderByDescending(g => g.Count())
                                                                 .Select(g => g.First()).First();
                         }
@@ -64,9 +73,9 @@ namespace grain_growth.Alghorithms
                         IsGrainUpdate = false;
 
                         // rule 1 - ordinary moore
-                        Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                        Neighborhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                        MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                        MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                 .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                         if (MostOfCells.Any())
@@ -78,9 +87,9 @@ namespace grain_growth.Alghorithms
                             else
                             {
                                 // rule 2 - nearest moore
-                                Neighbourhood = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                Neighborhood = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                     .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                 if (MostOfCells.Any())
@@ -94,9 +103,9 @@ namespace grain_growth.Alghorithms
                                 if (!IsGrainUpdate)
                                 {
                                     // rule 3 - further moore
-                                    Neighbourhood = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                    Neighborhood = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                    MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                    MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                         .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                     if (MostOfCells.Any())
@@ -110,9 +119,9 @@ namespace grain_growth.Alghorithms
                                     if (!IsGrainUpdate)
                                     {
                                         // rule 4 - ordinary moore with probability
-                                        Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                        Neighborhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                        MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                        MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                             .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                         if (MostOfCells.Any() && Random.Next(0, 100) <= properties.CurrGrowthProbability)
