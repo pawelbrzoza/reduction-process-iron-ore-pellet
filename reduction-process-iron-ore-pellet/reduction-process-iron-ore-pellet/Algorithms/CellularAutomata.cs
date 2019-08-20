@@ -3,33 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using grain_growth.Helpers;
 using grain_growth.Models;
-using FastBitmapLib;
-using System.Drawing;
 
-namespace grain_growth.Alghorithms
+namespace grain_growth.Algorithms
 {
-    public class CellularAutomata
+    public class CellularAutomata : RandomCoordinate
     {
-        private readonly Random Random = new Random();
-
         private List<Grain> Neighbourhood;
 
         private bool IsGrainUpdate;
 
         private IOrderedEnumerable<IGrouping<int, Grain>> MostOfCells;
 
-        public Range Grow(Range prevRange, Models.Properties properties)
+        public Range Grow(Range prevRange, MainProperties properties)
         {
-            var currRange = new Range(prevRange.Width, prevRange.Height, true);
+            var currRange = new Range(prevRange.Width, prevRange.Height);
+            StructureHandler.GrainsArrayInit(currRange);
+            StructureHandler.UpdateInsideCircle(currRange);
 
-            InitStructure.GrainsArrayInit(currRange);
-            InitStructure.UpdateInsideCircle(currRange);
-
-            foreach (var p in InitStructure.PointsArea)
+            foreach (var p in StructureHandler.PointsArea)
             {
                 if (prevRange.GrainsArray[p.X, p.Y].Id != (int)SpecialId.Id.Empty)
                 {
-                    // just init if there is already some color (not white)
+                    // change if there is already some color (not white)
                     currRange.GrainsArray[p.X, p.Y].Id = prevRange.GrainsArray[p.X, p.Y].Id;
                     currRange.GrainsArray[p.X, p.Y].Color = prevRange.GrainsArray[p.X, p.Y].Color;
                 }
@@ -37,33 +32,26 @@ namespace grain_growth.Alghorithms
                 {
                     if (properties.NeighbourhoodType != NeighbourhoodType.Moore2)
                     {
-                        switch (properties.NeighbourhoodType)
-                        {
-                            case NeighbourhoodType.Moore:
+                        if(properties.NeighbourhoodType == NeighbourhoodType.Moore)
                                 Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
-                                break;
-                            case NeighbourhoodType.Neumann:
+                        else
                                 Neighbourhood = TakeNeumannNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
-                                break;
-                        }
 
-                        var most = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
-                                                .GroupBy(g => g.Id);
-
-                        if (most.Any())
+                        var MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id));
+                                                
+                        if (MostOfCells.Any())
                         {
-                            // assign grain which are the most in the list of neighborhoods 
-                            currRange.GrainsArray[p.X, p.Y] = most.OrderByDescending(g => g.Count())
+                            // assign grain which are the most in the list of neighborhood
+                            currRange.GrainsArray[p.X, p.Y] = MostOfCells.GroupBy(g => g.Id).OrderByDescending(g => g.Count())
                                                                 .Select(g => g.First()).First();
                         }
                     }
                     else
                     {
                         // MOORE 2
-
                         IsGrainUpdate = false;
 
-                        // rule 1 - ordinary moore
+                        // rule 1 - ordinary Moore
                         Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
                         MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
@@ -77,7 +65,7 @@ namespace grain_growth.Alghorithms
                             }
                             else
                             {
-                                // rule 2 - nearest moore
+                                // rule 2 - nearest Moore (Von Neumann)
                                 Neighbourhood = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
                                 MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
@@ -93,7 +81,7 @@ namespace grain_growth.Alghorithms
                                 }
                                 if (!IsGrainUpdate)
                                 {
-                                    // rule 3 - further moore
+                                    // rule 3 - further Moore
                                     Neighbourhood = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
                                     MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
@@ -109,7 +97,7 @@ namespace grain_growth.Alghorithms
                                     }
                                     if (!IsGrainUpdate)
                                     {
-                                        // rule 4 - ordinary moore with probability
+                                        // rule 4 - ordinary Moore with probability
                                         Neighbourhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
                                         MostOfCells = Neighbourhood.Where(g => !SpecialId.IsSpecialId(g.Id))
@@ -170,41 +158,6 @@ namespace grain_growth.Alghorithms
                 GrainsArray[i + 1, j - 1],
                 GrainsArray[i + 1, j + 1]
             };
-        }
-
-        public static void UpdateBitmap(Phase phase, Bitmap mainBitmap)
-        {
-            //Stopwatch sw = Stopwatch.StartNew();
-            //for (int i = 0; i < range.Width; i++)
-            //    for (int j = 0; j < range.Height; j++)
-            //        range.StructureBitmap.SetPixel(i, j, range.GrainsArray[i, j].Color);
-            //Console.WriteLine("Serial: {0:f2} s", sw.Elapsed.TotalSeconds);
-
-            //Stopwatch sw = Stopwatch.StartNew();
-            using (FastBitmap fastBitmap = mainBitmap.FastLock())
-            {
-                for (int i = 1; i < mainBitmap.Width - 1; ++i)
-                    for (int j = 1; j < mainBitmap.Height - 1; ++j)
-                        if (phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Transparent &&
-                            phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Empty)
-                        {
-                            fastBitmap.SetPixel(i, j, phase.Range.GrainsArray[i, j].Color);
-                            if(phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Border)
-                                ++phase.Counter;
-                        }
-            }
-            //Console.WriteLine("Serial: {0:f2} s", sw.Elapsed.TotalSeconds);
-        }
-
-        public static void InstantFillColor(Phase phase, int id, Color color)
-        {
-            for (int i = 1; i < phase.Range.Width - 1; ++i)
-                for (int j = 1; j < phase.Range.Height - 1; ++j)
-                    if (phase.Range.GrainsArray[i, j].Id == (int)SpecialId.Id.Empty)
-                    {
-                        phase.Range.GrainsArray[i, j].Id = id;
-                        phase.Range.GrainsArray[i, j].Color = color;
-                    }
         }
     }
 }
