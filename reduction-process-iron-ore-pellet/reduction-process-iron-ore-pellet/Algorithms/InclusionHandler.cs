@@ -6,17 +6,17 @@ using grain_growth.Models;
 
 namespace grain_growth.Helpers
 {
-    public class InitInclusions
+    public class InclusionHandler : RandomCoordinate
     {
         private static List<Point> Points;
 
         public static void InitPoints(double percentageOfInclusions)
         {
             Points = new List<Point>();
-            double amount = percentageOfInclusions / 100.0 * Math.PI * Math.Pow(Constants.RADIOUS, 2);
+            double amount = percentageOfInclusions / 100.0 * Math.PI * Math.Pow(Constants.RADIUS, 2);
 
             for (int i = 0; i < amount; i++)
-                Points.Add(CalculatePoint(Constants.MIDDLE_POINT, Constants.RADIOUS));
+                Points.Add(RandomPointInsideCircle(Constants.MIDDLE_POINT, Constants.RADIUS));
         }
 
         public static void AddInclusions(Range range)
@@ -28,13 +28,13 @@ namespace grain_growth.Helpers
             }
         }
 
-        private static Point CalculatePoint(Point middle, double radius)
+        private static Point RandomPointInsideCircle(Point middle, double radius)
         {
             Point p;
             do
             {
-                var angle = RandomCoordinates.Random.NextDouble() * Math.PI * 2;
-                var r = Math.Sqrt(RandomCoordinates.Random.NextDouble()) * radius;
+                var angle = Random.NextDouble() * Math.PI * 2;
+                var r = Math.Sqrt(Random.NextDouble()) * radius;
                 double x = middle.X + r * Math.Cos(angle);
                 double y = middle.Y + r * Math.Sin(angle);
                 p = new Point((int)x, (int)y);

@@ -4,7 +4,7 @@ using System;
 namespace grain_growth.Models
 {
     [Serializable]
-    public class Properties
+    public class MainProperties
     {
         public int RangeWidth { get; set; }
 

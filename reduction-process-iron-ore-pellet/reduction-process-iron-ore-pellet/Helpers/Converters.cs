@@ -23,9 +23,9 @@ namespace grain_growth.Helpers
             }
         }
 
-        public static System.Drawing.Color WindowsToDrawingColor(System.Windows.Media.Color mediacolor)
+        public static Color WindowsToDrawingColor(System.Windows.Media.Color mediacolor)
         {
-            return System.Drawing.Color.FromArgb(mediacolor.A, mediacolor.R, mediacolor.G, mediacolor.B);
+            return Color.FromArgb(mediacolor.A, mediacolor.R, mediacolor.G, mediacolor.B);
         }
     }
 }

@@ -8,13 +8,14 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>grain_growth</RootNamespace>
     <AssemblyName>grain-growth</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -29,7 +30,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -52,7 +52,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -122,17 +122,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="Alghorithms\CellularAutomata.cs" />
+    <Compile Include="Algorithms\CellularAutomata.cs" />
     <Compile Include="Helpers\InitializeArray.cs" />
-    <Compile Include="Helpers\InitInclusion.cs" />
+    <Compile Include="Algorithms\InclusionHandler.cs" />
     <Compile Include="Helpers\ObjectCopier.cs" />
-    <Compile Include="Helpers\RandomCoordinates.cs" />
+    <Compile Include="Helpers\RandomCoordinate.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Helpers\Converters.cs" />
-    <Compile Include="Helpers\InitStructure.cs" />
+    <Compile Include="Algorithms\StructureHandler.cs" />
     <Compile Include="Helpers\TupleList.cs" />
     <Compile Include="Models\Constants.cs" />
     <Compile Include="Models\Grain.cs" />

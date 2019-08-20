@@ -22,12 +22,7 @@
             <Menu DockPanel.Dock="Top" Width="800">
                 <MenuItem Header="File">
                     <MenuItem Header="Microstructures">
-                        <MenuItem Header="Import">
-                            <MenuItem Header="TXT File" Click="ImportTXT_Click"/>
-                            <MenuItem Header="Bitmap" Click="ImportBitmap_Click"/>
-                        </MenuItem>
                         <MenuItem Header="Export">
-                            <MenuItem Header="TXT File" Click="ExportTXT_Click"/>
                             <MenuItem Header="Bitmap" Click="ExportBitmap_Click"/>
                         </MenuItem>
                     </MenuItem>
@@ -61,7 +56,7 @@
                 IsEnabled="False" Canvas.Left="260" Canvas.Top="278"/>
 
             <Label Content="Max temperature:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="174" Canvas.Left="19" Canvas.Top="336"/>
-            <TextBox x:Name="MaxTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="1200"
+            <TextBox x:Name="MaxTemperatureTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="300"
                     Canvas.Left="260" Canvas.Top="339"/>
 
             <Label Content="Temperature points of new phases:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="321" Canvas.Left="19" Canvas.Top="379"/>
@@ -76,11 +71,11 @@
 
             <TextBox x:Name="Phase1TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="0"
                     IsEnabled="False" Canvas.Left="19" Canvas.Top="455"/>
-            <TextBox x:Name="Phase2TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="200"
+            <TextBox x:Name="Phase2TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="1"
                     Canvas.Left="114" Canvas.Top="455"/>
-            <TextBox x:Name="Phase3TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="700"
+            <TextBox x:Name="Phase3TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="50"
                     Canvas.Left="205" Canvas.Top="457"/>
-            <TextBox x:Name="Phase4TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="900"
+            <TextBox x:Name="Phase4TextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="30" TextWrapping="Wrap" VerticalAlignment="Top" Width="66" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="100"
                     Canvas.Left="294" Canvas.Top="455"/>
 
             <Label Content="Colours:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="308" Canvas.Left="17" Canvas.Top="487"/>
@@ -114,7 +109,7 @@
             <Label x:Name="Phase4Label" Content="0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="33" Width="75" Canvas.Left="702" Canvas.Top="515"/>
 
             <Label Content=" Inclusions [%]:" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="18" Foreground="White" FontWeight="Bold" Height="34" Width="142" Canvas.Left="440" Canvas.Top="576"/>
-            <TextBox x:Name="AmountOfInclusionsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="20"
+            <TextBox x:Name="AmountOfInclusionsTextBox" TextAlignment="Center" HorizontalAlignment="Left" Height="32" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.188,0.628" FontSize="20" FontWeight="Bold" Text="0"
                     Canvas.Left="629" Canvas.Top="576"/>
         </Canvas>
 
@@ -134,7 +129,7 @@
                 </Canvas>
             </Grid>
 
-            <Button Content="Generate" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Play_Button_Click" Grid.Column="1"
+            <Button Content="Generate" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Generate_Button_Click" Grid.Column="1"
                     Canvas.Left="446" Canvas.Top="639"/>
             <Button x:Name="StopButton" Content="Stop" HorizontalAlignment="Center" VerticalAlignment="Top" Width="140" Height="40" FontSize="24" Click="Stop_Button_Click"
                 Canvas.Left="610" Canvas.Top="639"/>
