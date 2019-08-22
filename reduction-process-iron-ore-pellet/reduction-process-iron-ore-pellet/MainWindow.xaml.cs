@@ -24,9 +24,9 @@ namespace grain_growth
         private readonly Task<Range>[] Tasks = new Task<Range>[Constants.NUMBER_OF_PHASES];
         private readonly DispatcherTimer MainDispatcher = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 0) };
         private readonly DispatcherTimer TempteratureDispatcher = new DispatcherTimer();
-        private readonly SynchronizationContext mainThread = SynchronizationContext.Current;
-        private Bitmap mainBitmap;
-        private Stopwatch stopWatch;
+        private readonly SynchronizationContext MainThread = SynchronizationContext.Current;
+        private Bitmap MainBitmap;
+        private Stopwatch StopWatch;
         private StringBuilder csv;
 
         public MainWindow()
@@ -34,7 +34,7 @@ namespace grain_growth
             InitializeComponent();
             MainDispatcher.Tick += PhasesDispatcherTick;
             TempteratureDispatcher.Tick += TemperaturDispatcherTick;
-            if (mainThread == null) mainThread = new SynchronizationContext();
+            if (MainThread == null) MainThread = new SynchronizationContext();
 
             ConstantGrowthRadioButton.IsChecked = true;
             Phase1NameLabel.Content = Phase1NameTextBox.Text + " [%]";
@@ -45,7 +45,7 @@ namespace grain_growth
 
         private void SetProperties()
         {
-            mainBitmap = new Bitmap((int)PelletImage.Width, (int)PelletImage.Height);
+            MainBitmap = new Bitmap((int)PelletImage.Width, (int)PelletImage.Height);
 
             // properties
             Properties = new MainProperties()
@@ -95,6 +95,11 @@ namespace grain_growth
             Phases[2].Color = Converters.WindowsToDrawingColor(Phase3ColorPicker.SelectedColor.Value);
             Phases[3].Color = Converters.WindowsToDrawingColor(Phase4ColorPicker.SelectedColor.Value);
 
+            Phases[0].GrowthProbability = int.Parse(Phase1PropabilityTextBox.Text);
+            Phases[1].GrowthProbability = int.Parse(Phase2PropabilityTextBox.Text);
+            Phases[2].GrowthProbability = int.Parse(Phase3PropabilityTextBox.Text);
+            Phases[3].GrowthProbability = int.Parse(Phase4PropabilityTextBox.Text);
+
             for (int i = 0; i < Constants.NUMBER_OF_PHASES; i++)
             {
                 Phases[i].Range = new Range(Properties.RangeWidth, Properties.RangeWidth);
@@ -110,16 +115,9 @@ namespace grain_growth
                 Properties.CurrGrowthProbability = Phases[i].GrowthProbability;
                 Phases[i].Properties = ObjectCopier.Clone(Properties);
 
-
-                Phases[i].PrevRange = StructureHandler.InitCellularAutomata(Properties, Phases[i].Color);
+                Phases[i].PrevRange = StructureHandler.InitCellularAutomata(Properties, i + 1, Phases[i].Color);
                 InclusionHandler.AddInclusions(Phases[i].PrevRange);
-                Phases[i].CA = new CellularAutomata();
             }
-
-            Phases[0].GrowthProbability = int.Parse(Phase1PropabilityTextBox.Text);
-            Phases[1].GrowthProbability = int.Parse(Phase2PropabilityTextBox.Text);
-            Phases[2].GrowthProbability = int.Parse(Phase3PropabilityTextBox.Text);
-            Phases[3].GrowthProbability = int.Parse(Phase4PropabilityTextBox.Text);
 
             // !! PHASE 1 - INITIALIZATION !! //
             StructureHandler.InstantFillColor(Phases[0], 1, Phases[0].Color);
@@ -129,17 +127,15 @@ namespace grain_growth
 
             // .csv file
             csv = new StringBuilder();
-            var newLine = string.Format("{0};{1};{2};{3};{4}", "Temperature", Phases[0].Name, Phases[1].Name, Phases[2].Name, Phases[3].Name);
+            var newLine = string.Format("{0};{1};{2};{3};{4};{5}", "Time", "Temperature", Phases[0].Name, Phases[1].Name, Phases[2].Name, Phases[3].Name);
             csv.AppendLine(newLine);
         }
 
         private void TemperaturDispatcherTick(object sender, EventArgs e)
         {
-            CollectData();
-
             if (Properties.CurrTemperature < Properties.MaxTemperature)
             {
-                Properties.CurrTemperature = ((int)stopWatch.Elapsed.TotalMilliseconds / Properties.TemperatureRiseRate)
+                Properties.CurrTemperature = ((int)StopWatch.Elapsed.TotalMilliseconds / Properties.TemperatureRiseRate)
                     - Properties.BufferTemperature;
                 temperatureLabel.Content = Convert.ToString(Properties.CurrTemperature);
             }
@@ -154,9 +150,9 @@ namespace grain_growth
                 MainDispatcher.Stop();
                 TempteratureDispatcher.Stop();
             }
-        }
 
-        Task<Range>[] tasks = new Task<Range>[4];
+            CollectData();
+        }
 
         private void PhasesDispatcherTick(object sender, EventArgs e)
         {
@@ -171,11 +167,10 @@ namespace grain_growth
             for (int p = 0; p < Constants.NUMBER_OF_PHASES; p++)
             {
                 Phases[p].Range = Tasks[p].Result;
-                Phases[p].Counter = 0;
-                StructureHandler.UpdateBitmap(Phases[p], mainBitmap);
+                StructureHandler.UpdateBitmap(Phases[p], MainBitmap);
             }
 
-            PelletImage.Source = Converters.BitmapToImageSource(mainBitmap);
+            PelletImage.Source = Converters.BitmapToImageSource(MainBitmap);
             PhasePercentageUpdate();
         }
 
@@ -185,7 +180,7 @@ namespace grain_growth
             if(p > 0)
                 if (Properties.CurrTemperature >= Phases[p].TemperaturePoint)
                 {
-                    Phases[p].CurrRange = Phases[p].CA.Grow(Phases[p].PrevRange, Phases[p].Properties);
+                    Phases[p].CurrRange = Phases[p].Grow(Phases[p].PrevRange, Phases[p].Properties);
                     Phases[p].PrevRange = Phases[p].CurrRange;
                     return Phases[p].CurrRange;
                 }
@@ -195,25 +190,26 @@ namespace grain_growth
 
         private void PhasePercentageUpdate()
         {
-            Phases[3].Percentage = (Phases[3].Counter / Constants.CIRCLE_AREA) * 100;
-            Phases[3].Percentage = Math.Round(Phases[3].Percentage, 2);
+            StructureHandler.CountGrains(Phases, MainBitmap);
 
-            Phases[2].Percentage = ((Phases[2].Counter / Constants.CIRCLE_AREA) * 100)
-                 - Phases[3].Percentage;
-            Phases[2].Percentage = Math.Round(Phases[2].Percentage, 2);
+            var total = Phases[0].Counter + Phases[1].Counter + Phases[2].Counter + Phases[3].Counter;
 
-            Phases[1].Percentage = ((Phases[1].Counter / Constants.CIRCLE_AREA) * 100)
-                 - Phases[2].Percentage - Phases[3].Percentage;
-            Phases[1].Percentage = Math.Round(Phases[1].Percentage, 2);
-
-            Phases[0].Percentage = ((Phases[0].Counter / Constants.CIRCLE_AREA) * 100)
-                 - Phases[1].Percentage - Phases[2].Percentage - Phases[3].Percentage;
+            Phases[0].Percentage = ((total - Phases[1].Counter - Phases[2].Counter - Phases[3].Counter) / Constants.CIRCLE_AREA) * 100;
             Phases[0].Percentage = Math.Round(Phases[0].Percentage, 2);
 
-            Phase1Label.Content = Phases[0].Percentage /*> 0 ? phases[0].Percentage : 0*/;
-            Phase2Label.Content = Phases[1].Percentage /*> 0 ? phases[1].Percentage : 0*/;
-            Phase3Label.Content = Phases[2].Percentage /*> 0 ? phases[2].Percentage : 0*/;
-            Phase4Label.Content = Phases[3].Percentage /*> 0 ? phases[3].Percentage : 0*/;
+            Phases[1].Percentage = ((total - Phases[0].Counter - Phases[2].Counter - Phases[3].Counter) / Constants.CIRCLE_AREA) * 100;
+            Phases[1].Percentage = Math.Round(Phases[1].Percentage, 2);
+
+            Phases[2].Percentage = ((total - Phases[0].Counter - Phases[1].Counter - Phases[3].Counter) / Constants.CIRCLE_AREA) * 100;
+            Phases[2].Percentage = Math.Round(Phases[2].Percentage, 2);
+
+            Phases[3].Percentage = ((total - Phases[0].Counter - Phases[1].Counter - Phases[2].Counter) / Constants.CIRCLE_AREA) * 100;
+            Phases[3].Percentage = Math.Round(Phases[3].Percentage, 2);
+
+            Phase1Label.Content = Phases[0].Percentage /*> 0 ? Phases[0].Percentage : 0*/;
+            Phase2Label.Content = Phases[1].Percentage /*> 0 ? Phases[1].Percentage : 0*/;
+            Phase3Label.Content = Phases[2].Percentage /*> 0 ? Phases[2].Percentage : 0*/;
+            Phase4Label.Content = Phases[3].Percentage /*> 0 ? Phases[3].Percentage : 0*/;
         }
 
         private void CollectData()
@@ -221,24 +217,25 @@ namespace grain_growth
             //collectedData.Add(properties.CurrTemperature, phases[0].Percentage, phases[1].Percentage, phases[2].Percentage, phases[3].Percentage);
             //Console.WriteLine("Temp.: " + properties.CurrTemperature + ", Fe2O3 [%]: " + phases[0].Percentage + ", Fe3O4 [%]: " + phases[1].Percentage
             //                    + ", FeO [%]: " + phases[2].Percentage + ", Fe [%]: " + phases[3].Percentage);
+            var time = StopWatch.Elapsed.TotalMilliseconds / 1000;
             var temperature = Properties.CurrTemperature.ToString();
             var phase0 = Phases[0].Percentage > 0 ? Phases[0].Percentage.ToString() : "0";
             var phase1 = Phases[1].Percentage > 0 ? Phases[1].Percentage.ToString() : "0";
             var phase2 = Phases[2].Percentage > 0 ? Phases[2].Percentage.ToString() : "0";
             var phase3 = Phases[3].Percentage > 0 ? Phases[3].Percentage.ToString() : "0";
-            var newLine = string.Format("{0};{1};{2};{3};{4}", temperature, phase0, phase1, phase2, phase3);
+            var newLine = string.Format("{0};{1};{2};{3};{4};{5}", time, temperature, phase0, phase1, phase2, phase3);
             csv.AppendLine(newLine);
         }
 
         private void WriteToFileTheEnd()
         {
-            var newLine = string.Format("Total time:;{0:f2};s\nInclusion:;{1};%", stopWatch.Elapsed.TotalSeconds, Properties.AmountOfInclusions);
+            var newLine = string.Format("Total time:;{0:f2};s\nInclusion:;{1};%", StopWatch.Elapsed.TotalSeconds, Properties.AmountOfInclusions);
             csv.AppendLine(newLine);
             newLine = string.Format("Amount of grains:;{0}", Properties.AmountOfGrains);
             csv.AppendLine(newLine);
             newLine = string.Format("Pellet size:;{0};px", Properties.PelletSize);
             csv.AppendLine(newLine);
-            newLine = string.Format("Probability:;{0}/{1}/{2};%", Phases[1].GrowthProbability, Phases[1].GrowthProbability, Phases[2].GrowthProbability);
+            newLine = string.Format("Probability:;{0}->{1}->{2}->{3};%", Phases[0].GrowthProbability, Phases[1].GrowthProbability, Phases[2].GrowthProbability, Phases[3].GrowthProbability);
             csv.AppendLine(newLine);
             newLine = string.Format("Growth type:;{0}", Properties.NeighbourhoodType.ToString());
             csv.AppendLine(newLine);
@@ -249,13 +246,13 @@ namespace grain_growth
 
         private async void BufferTempteraturLoading()
         {
-            int temp_time = ((int)stopWatch.Elapsed.TotalMilliseconds / Properties.TemperatureRiseRate);
+            int temp_time = ((int)StopWatch.Elapsed.TotalMilliseconds / Properties.TemperatureRiseRate);
             await Task.Factory.StartNew(() =>
             {
                 while (!TempteratureDispatcher.IsEnabled) { }
 
-                mainThread.Send((object state) => {
-                    Properties.BufferTemperature += ((int)stopWatch.Elapsed.TotalMilliseconds / Properties.TemperatureRiseRate) - temp_time;
+                MainThread.Send((object state) => {
+                    Properties.BufferTemperature += ((int)StopWatch.Elapsed.TotalMilliseconds / Properties.TemperatureRiseRate) - temp_time;
                 }, null);
             });
         }
@@ -269,7 +266,7 @@ namespace grain_growth
             SetProperties();
             TempteratureDispatcher.Start();
             MainDispatcher.Start();
-            stopWatch = Stopwatch.StartNew();
+            StopWatch = Stopwatch.StartNew();
         }
 
         private void Stop_Button_Click(object sender, RoutedEventArgs e)
@@ -341,7 +338,7 @@ namespace grain_growth
 
         private void ExportBitmap_Click(object sender, RoutedEventArgs e)
         {
-            mainBitmap.MakeTransparent(Color.HotPink);
+            MainBitmap.MakeTransparent(Color.HotPink);
 
             SaveFileDialog save = new SaveFileDialog
             {
@@ -351,7 +348,7 @@ namespace grain_growth
             };
             if (save.ShowDialog() == true)
             {
-                mainBitmap.Save(save.FileName, ImageFormat.Png);
+                MainBitmap.Save(save.FileName, ImageFormat.Png);
             }
         }
 

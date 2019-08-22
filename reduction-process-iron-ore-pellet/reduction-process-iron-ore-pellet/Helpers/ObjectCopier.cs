@@ -11,7 +11,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace grain_growth.Helpers
 {
-    public static class ObjectCopier
+    public class ObjectCopier
     {
         /// <summary>
         /// Perform a deep Copy of the object.

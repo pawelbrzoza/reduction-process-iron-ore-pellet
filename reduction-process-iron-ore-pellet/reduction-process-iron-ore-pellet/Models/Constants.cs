@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace grain_growth.Models
 {
-    public static class Constants
+    public class Constants
     {
         public const int NUMBER_OF_PHASES = 4;
         public static double RADIUS;

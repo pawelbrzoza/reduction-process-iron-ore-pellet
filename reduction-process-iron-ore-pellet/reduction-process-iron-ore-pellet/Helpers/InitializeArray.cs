@@ -1,6 +1,6 @@
 ﻿namespace grain_growth.Helpers
 {
-    public static class InitializeArray
+    public class InitializeArray
     {
         public static T[] Init<T>(int length) where T : new()
         {

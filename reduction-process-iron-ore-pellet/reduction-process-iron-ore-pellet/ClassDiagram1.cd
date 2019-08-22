@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="grain_growth.Algorithms.CellularAutomata">
+    <Position X="0.5" Y="3" Width="4" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAhAAIAAAAAAAAAAAEAAAAAAAAQAEAAAAEACAA=</HashCode>
+      <FileName>Algorithms\CellularAutomata.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.Algorithms.StructureHandler">
+    <Position X="4.75" Y="3" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAABQAAACABAQAAAABAAAQJAAEAIAAAQIAAAAAAAA=</HashCode>
+      <FileName>Algorithms\StructureHandler.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.Helpers.RandomCoordinate">
+    <Position X="1" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAABAgAAAAAAAAAAAA=</HashCode>
+      <FileName>Helpers\RandomCoordinate.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.MainWindow" BaseTypeListCollapsed="true">
+    <Position X="7.75" Y="0.5" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>ggIABIAEAAAAEAgCgAAIIIAAQQAwGAEAUBAIABAKBAA=</HashCode>
+      <FileName>MainWindow.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="grain_growth.Models.Constants" Collapsed="true">
+    <Position X="10.5" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAQAAAAAAAAAAAQAAAAAACAAAAAAAAAIAAQA=</HashCode>
+      <FileName>Models\Constants.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.Models.Phase">
+    <Position X="1.75" Y="6.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAgAAAACIAAAAAAAAQAAQhAIAAAAAAAgAACAAA=</HashCode>
+      <FileName>Models\Phase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.Models.MainProperties" Collapsed="true">
+    <Position X="10.5" Y="7.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAEAAABCAABAAIAAAAAAAAAAAAEAAQEABAAAYA=</HashCode>
+      <FileName>Models\MainProperties.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.Models.Range" Collapsed="true">
+    <Position X="3.75" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAAAAAAEAAAIAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>Models\Range.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="grain_growth.Algorithms.InclusionHandler">
+    <Position X="4.75" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAAAAAAAAAAAAAAACAAEAIAAAAAAAA=</HashCode>
+      <FileName>Algorithms\InclusionHandler.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

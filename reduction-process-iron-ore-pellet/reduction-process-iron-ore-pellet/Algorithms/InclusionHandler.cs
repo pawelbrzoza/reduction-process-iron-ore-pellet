@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 
 using grain_growth.Models;
+using grain_growth.Helpers;
 
-namespace grain_growth.Helpers
+namespace grain_growth.Algorithms
 {
     public class InclusionHandler : RandomCoordinate
     {

@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Drawing;
 using FastBitmapLib;
-using grain_growth.Models;
 
-namespace grain_growth.Helpers
+using grain_growth.Models;
+using grain_growth.Helpers;
+
+namespace grain_growth.Algorithms
 {
     public class StructureHandler : RandomCoordinate
     {
-        public static Grain[] AllGrainsTypes;
-
         public static List<Point> PointsArea;
 
-        public static Range InitCellularAutomata(MainProperties properties, Color grainColor)
+        public static Range InitCellularAutomata(MainProperties properties, int id, Color grainColor)
         {
-            AllGrainsTypes = new Grain[properties.AmountOfGrains];
-
             Range tempRange = new Range(properties.RangeWidth, properties.RangeHeight);
 
             InitBlankArea(tempRange);
@@ -32,14 +30,8 @@ namespace grain_growth.Helpers
                     }
                     while (tempRange.GrainsArray[coordinates.X, coordinates.Y].Id != (int)SpecialId.Id.Border);
 
-                    AllGrainsTypes[grainNumber - 1] = new Grain()
-                    {
-                        Id = grainNumber,
-                        Color = grainColor,
-                    };
-
-                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
-                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
+                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = id;
+                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = grainColor;
                 }
             }
             else if (properties.StartingPointsType == StartingPointsType.RegularBoundary)
@@ -51,14 +43,8 @@ namespace grain_growth.Helpers
                     coordinates.X = (int)(Constants.MIDDLE_POINT.X + (Constants.RADIUS-2) * Math.Cos(angle * Math.PI / 180.0));
                     coordinates.Y = (int)(Constants.MIDDLE_POINT.Y + (Constants.RADIUS-2) * Math.Sin(angle * Math.PI / 180.0));
 
-                    AllGrainsTypes[grainNumber - 1] = new Grain()
-                    {
-                        Id = grainNumber,
-                        Color = grainColor,
-                    };
-
-                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
-                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
+                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = id;
+                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = grainColor;
                 }
             }
             else
@@ -72,17 +58,10 @@ namespace grain_growth.Helpers
                     }
                     while (tempRange.GrainsArray[coordinates.X, coordinates.Y].Id != (int)SpecialId.Id.Empty);
 
-                    AllGrainsTypes[grainNumber - 1] = new Grain()
-                    {
-                        Id = grainNumber,
-                        Color = grainColor,
-                    };
-
-                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = AllGrainsTypes[grainNumber - 1].Id;
-                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = AllGrainsTypes[grainNumber - 1].Color;
+                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Id = id;
+                    tempRange.GrainsArray[coordinates.X, coordinates.Y].Color = grainColor;
                 }
             }
-
             return tempRange;
         }
 
@@ -112,13 +91,26 @@ namespace grain_growth.Helpers
 
         public static void UpdateInsideCircle(Range tempRange)
         {
-            foreach (var point in PointsArea)
+            foreach (var p in PointsArea)
             {
-                if (tempRange.GrainsArray[point.X, point.Y].Id == (int)SpecialId.Id.Transparent)
+                if (tempRange.GrainsArray[p.X, p.Y].Id == (int)SpecialId.Id.Transparent)
                 {
-                    tempRange.GrainsArray[point.X, point.Y].Id = (int)SpecialId.Id.Empty;
-                    tempRange.GrainsArray[point.X, point.Y].Color = Color.White;
+                    tempRange.GrainsArray[p.X, p.Y].Id = (int)SpecialId.Id.Empty;
+                    tempRange.GrainsArray[p.X, p.Y].Color = Color.White;
                 }
+            }
+        }
+
+        public static void CountGrains(Phase[] phases, Bitmap bitmap)
+        {
+            phases[0].Counter = phases[1].Counter = phases[2].Counter = phases[3].Counter = 0;
+            using (FastBitmap fastBitmap = bitmap.FastLock())
+            {
+                for (int i = 1; i < bitmap.Width - 1; ++i)
+                    for (int j = 1; j < bitmap.Height - 1; ++j)
+                        for (int k = 0; k < Constants.NUMBER_OF_PHASES; k++)
+                            if (fastBitmap.GetPixel(i, j) == phases[k].Color)
+                                ++phases[k].Counter;
             }
         }
 
@@ -139,7 +131,7 @@ namespace grain_growth.Helpers
             return pointsInside;
         }
 
-        public static void DrawBlackCircleBorder(Range tempRange)
+        private static void DrawBlackCircleBorder(Range tempRange)
         {
             int x, y, x0, y0, d, radius = (int)Constants.RADIUS;
             x0 = Constants.MIDDLE_POINT.X;
@@ -192,13 +184,13 @@ namespace grain_growth.Helpers
             {
                 for (int i = 1; i < mainBitmap.Width - 1; ++i)
                     for (int j = 1; j < mainBitmap.Height - 1; ++j)
+                    {
                         if (phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Transparent &&
                             phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Empty)
                         {
                             fastBitmap.SetPixel(i, j, phase.Range.GrainsArray[i, j].Color);
-                            if (phase.Range.GrainsArray[i, j].Id != (int)SpecialId.Id.Border)
-                                ++phase.Counter;
                         }
+                    }
             }
         }
 

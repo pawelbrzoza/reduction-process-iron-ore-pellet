@@ -5,15 +5,13 @@ using System.Drawing;
 
 namespace grain_growth.Models
 {
-    public class Phase
+    public class Phase : CellularAutomata
     {
         public Range Range { get; set; }
 
         public Range CurrRange { get; set; }
 
         public Range PrevRange { get; set; }
-        
-        public CellularAutomata CA { get; set; }
 
         public MainProperties Properties { get; set; }
 

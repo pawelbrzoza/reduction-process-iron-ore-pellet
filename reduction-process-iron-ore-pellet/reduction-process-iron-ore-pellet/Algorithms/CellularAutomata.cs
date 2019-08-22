@@ -8,7 +8,7 @@ namespace grain_growth.Algorithms
 {
     public class CellularAutomata : RandomCoordinate
     {
-        private List<Grain> Neighborhood;
+        private List<Grain> NeighborhoodList;
 
         private bool IsGrainUpdate;
 
@@ -33,11 +33,11 @@ namespace grain_growth.Algorithms
                     if (properties.NeighbourhoodType != NeighbourhoodType.Moore2)
                     {
                         if(properties.NeighbourhoodType == NeighbourhoodType.Moore)
-                                Neighborhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                NeighborhoodList = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
                         else
-                                Neighborhood = TakeNeumannNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                NeighborhoodList = TakeNeumannNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                        var MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id));
+                        var MostOfCells = NeighborhoodList.Where(g => !SpecialId.IsSpecialId(g.Id));
                                                 
                         if (MostOfCells.Any())
                         {
@@ -52,9 +52,9 @@ namespace grain_growth.Algorithms
                         IsGrainUpdate = false;
 
                         // rule 1 - ordinary Moore
-                        Neighborhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                        NeighborhoodList = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                        MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                        MostOfCells = NeighborhoodList.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                 .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                         if (MostOfCells.Any())
@@ -66,9 +66,9 @@ namespace grain_growth.Algorithms
                             else
                             {
                                 // rule 2 - nearest Moore (Von Neumann)
-                                Neighborhood = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                NeighborhoodList = TakeNearestMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                MostOfCells = NeighborhoodList.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                     .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                 if (MostOfCells.Any())
@@ -82,9 +82,9 @@ namespace grain_growth.Algorithms
                                 if (!IsGrainUpdate)
                                 {
                                     // rule 3 - further Moore
-                                    Neighborhood = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                    NeighborhoodList = TakeFurtherMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                    MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                    MostOfCells = NeighborhoodList.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                         .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                     if (MostOfCells.Any())
@@ -98,9 +98,9 @@ namespace grain_growth.Algorithms
                                     if (!IsGrainUpdate)
                                     {
                                         // rule 4 - ordinary Moore with probability
-                                        Neighborhood = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
+                                        NeighborhoodList = TakeMooreNeighbourhood(p.X, p.Y, prevRange.GrainsArray);
 
-                                        MostOfCells = Neighborhood.Where(g => !SpecialId.IsSpecialId(g.Id))
+                                        MostOfCells = NeighborhoodList.Where(g => !SpecialId.IsSpecialId(g.Id))
                                                             .GroupBy(g => g.Id).OrderByDescending(g => g.Count());
 
                                         if (MostOfCells.Any() && Random.Next(0, 100) <= properties.CurrGrowthProbability)
